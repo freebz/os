@@ -43,12 +43,21 @@ entry:
 	MOV	DH, 0		; 헤드 0
 	MOV	CL, 2		; 섹터 2
 
+	MOV	SI, 0		; 실패 횟수를 세는 레지스터
+retry:
 	MOV	AH, 0x02	; AH=0x02 : 디스크 read
 	MOV	AL, 1		; 1섹터
 	MOV	BX, 0
 	MOV	DL, 0x00	; A드라이브
 	INT	0x13		; 디스크 BIOS 호출
-	JC	error
+	JNC	fin		; 에러가 없으면 fin으로
+	ADD	SI, 1		; SI에 1을 더한다.
+	CMP	SI, 5		; SI를 5와 비교
+	JAE	error		; SI >= 5 이면 error로
+	MOV	AH, 0x00
+	MOV	DL, 0x00	; A드라이브
+	INT	0x13		; 드라이브 리셋
+	JMP	retry
 
 ;다 읽었지만 우선 할일이 없기 때문에 sleep
 
