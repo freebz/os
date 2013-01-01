@@ -43,6 +43,7 @@ entry:
 	MOV	DH, 0		; 헤드 0
 	MOV	CL, 2		; 섹터 2
 
+readloop:
 	MOV	SI, 0		; 실패 횟수를 세는 레지스터
 retry:
 	MOV	AH, 0x02	; AH=0x02 : 디스크 read
@@ -50,7 +51,7 @@ retry:
 	MOV	BX, 0
 	MOV	DL, 0x00	; A드라이브
 	INT	0x13		; 디스크 BIOS 호출
-	JNC	fin		; 에러가 없으면 fin으로
+	JNC	next		; 에러가 없으면 next으로
 	ADD	SI, 1		; SI에 1을 더한다.
 	CMP	SI, 5		; SI를 5와 비교
 	JAE	error		; SI >= 5 이면 error로
@@ -58,6 +59,14 @@ retry:
 	MOV	DL, 0x00	; A드라이브
 	INT	0x13		; 드라이브 리셋
 	JMP	retry
+
+next:
+	MOV	AX, ES		; 어드레스를 0x200 더한다. 512/16
+	ADD	AX, 0x0020
+	MOV	ES, AX		; ES에 덧셈하기 위해서 AX를 이용
+	ADD	CL, 1		; CL에 1을 더한다.
+	CMP	CL, 18		; CL과 18을 비교
+	JBE	readloop	; CL <= 18이라면 readloop로
 
 ;다 읽었지만 우선 할일이 없기 때문에 sleep
 
