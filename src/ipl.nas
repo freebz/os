@@ -1,6 +1,8 @@
 ;hello-os
 ;TAB=4
 
+CYLS	EQU	10
+
 	ORG	0x7c00		; 메모리 내 어디에 로딩되는가
 				; 부트섹터가 읽혀지는 어드레스
 
@@ -67,6 +69,15 @@ next:
 	ADD	CL, 1		; CL에 1을 더한다.
 	CMP	CL, 18		; CL과 18을 비교
 	JBE	readloop	; CL <= 18이라면 readloop로
+
+	MOV	CL, 1
+	ADD	DH, 1
+	CMP	DH, 2
+	JB	readloop	; DH < 2 라면 readloop로
+	MOV	DH, 0
+	ADD	CH, 1
+	CMP	CH, CYLS
+	JB	readloop
 
 ;다 읽었지만 우선 할일이 없기 때문에 sleep
 
