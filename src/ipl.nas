@@ -30,30 +30,51 @@
 ;프로그램 본체
 
 entry:
-	MOV	AX, 0	; 레지스터 초기화
+	MOV	AX, 0		; 레지스터 초기화
 	MOV	SS, AX
 	MOV	SP, 0x7c00
 	MOV	DS, AX
-	MOV	ES, AX
 
+;디스크를 읽는다.
+
+	MOV	AX, 0x0820
+	MOV	ES, AX
+	MOV	CH, 0		; 실린더 0
+	MOV	DH, 0		; 헤드 0
+	MOV	CL, 2		; 섹터 2
+
+	MOV	AH, 0x02	; AH=0x02 : 디스크 read
+	MOV	AL, 1		; 1섹터
+	MOV	BX, 0
+	MOV	DL, 0x00	; A드라이브
+	INT	0x13		; 디스크 BIOS 호출
+	JC	error
+
+;다 읽었지만 우선 할일이 없기 때문에 sleep
+
+fin:
+	HLT			; CPU를 정지시킴
+	JMP	fin		; 무한루프
+
+error:
+	MOV	AX, 0
+	MOV	ES, AX
 	MOV	SI, msg
+
 putloop:
 	MOV	AL, [SI]
-	ADD	SI, 1	; SI에 1울 더한다.
+	ADD	SI, 1		; SI에 1울 더한다.
 	CMP	AL, 0
 	JE	fin
 	MOV	AH, 0x0e	; 한 문자 표시 기능
 	MOV	BX, 15		; 컬러 코드
 	INT	0x10		; 비디오 BIOS 호출
 	JMP	putloop
-fin:
-	HLT			; CPU를 정지시킴
-	JMP	fin		; 무한루프
 
 ;메시지 부분
 msg:
 	DB	0x0a, 0x0a	; 줄 바꿈 2개
-	DB	"How are you?"
+	DB	"load error"
 	DB	0x0a		; 줄 바꿈 1개
 	DB	0
 
