@@ -79,11 +79,8 @@ next:
 	CMP	CH, CYLS
 	JB	readloop
 
-;다 읽었지만 우선 할일이 없기 때문에 sleep
-
-fin:
-	HLT			; CPU를 정지시킴
-	JMP	fin		; 무한루프
+;다 읽었으면 haribote.sys를 실행
+	JMP	0xc200
 
 error:
 	MOV	AX, 0
