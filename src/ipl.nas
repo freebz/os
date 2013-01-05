@@ -97,6 +97,10 @@ putloop:
 	INT	0x10		; 비디오 BIOS 호출
 	JMP	putloop
 
+fin:
+	HLT
+	JMP	fin
+
 ;메시지 부분
 msg:
 	DB	0x0a, 0x0a	; 줄 바꿈 2개
