@@ -1,4 +1,4 @@
-;hello-os
+;haribote-ipl
 ;TAB=4
 
 CYLS	EQU	10
@@ -10,7 +10,7 @@ CYLS	EQU	10
 
 	JMP	 entry
 	DB	 0x90
-	DB	 "HelloIPL"  ;부트섹터의 이름을 자유롭게 써도 좋음
+	DB	 "HARIBOTE"  ;부트섹터의 이름을 자유롭게 써도 좋음
 	DW	 512	     ;1섹터의 크기(바이트 단위.512로 해야 함)
 	DB	 1	     ;클러스터의 크기(1섹터로 해야 함)
 	DW	 1	     ;에약된 섹터의 수
@@ -80,6 +80,7 @@ next:
 	JB	readloop
 
 ;다 읽었으면 haribote.sys를 실행
+    	MOV     [0x0ff0], CH
 	JMP	0xc200
 
 error:
