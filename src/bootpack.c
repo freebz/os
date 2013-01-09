@@ -36,20 +36,10 @@ struct BOOTINFO {
 
 void HariMain(void)
 {
-  char *vram;
-  int xsize, ysize;
-  struct BOOTINFO *binfo;
-
-  short *binfo_scrnx, *binfo_scrny;
-  int *binfo_vram;
+  struct BOOTINFO *binfo = (struct BOOTINFO *) 0x0ff0;
 
   init_palette();
-  binfo = (struct BOOTINFO *) 0x0ff0;
-  xsize = (*binfo).scrnx;
-  ysize = (*binfo).scrny;
-  vram = (*binfo).vram;
-
-  init_screen(vram, xsize, ysize);
+  init_screen(binfo->vram, binfo->scrnx, binfo->scrny);
 
   for (;;) {
     io_hlt();  /* 이것으로 naskfunc.nas의 _io_hlt가 실행된다. */
