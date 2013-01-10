@@ -27,11 +27,17 @@ void init_palette(void);
 void set_palette(int start, int end, unsigned char *rgb);
 void boxfill8(unsigned char *, int, unsigned char, int, int, int, int);
 void init_screen(char *vram, int xsize, int ysize);
+void putfont8(char *vram, int xsize, int x, int y, char c, char *font);
 
 struct BOOTINFO {
   char cyls, leds, vmode, reserve;
   short scrnx, scrny;
   char *vram;
+};
+
+static char font_A[16] = {
+  0x00, 0x18, 0x18, 0x18, 0x18, 0x24, 0x24, 0x24,
+  0x24, 0x7e, 0x42, 0x42, 0x42, 0xe7, 0x00, 0x00
 };
 
 void HariMain(void)
@@ -40,6 +46,8 @@ void HariMain(void)
 
   init_palette();
   init_screen(binfo->vram, binfo->scrnx, binfo->scrny);
+
+  putfont8(binfo->vram, binfo->scrnx, 8, 8, COL8_FFFFFF, font_A);
 
   for (;;) {
     io_hlt();  /* 이것으로 naskfunc.nas의 _io_hlt가 실행된다. */
@@ -115,4 +123,23 @@ void init_screen(char *vram, int xsize, int ysize)
   boxfill8(vram, xsize, COL8_848484, xsize - 47, ysize - 23, xsize - 47, ysize -  4);
   boxfill8(vram, xsize, COL8_FFFFFF, xsize - 47, ysize -  3, xsize -  4, ysize -  3);
   boxfill8(vram, xsize, COL8_FFFFFF, xsize -  3, ysize - 24, xsize -  3, ysize -  3);
+}
+
+void putfont8(char *vram, int xsize, int x, int y, char c, char *font)
+{
+  int i;
+  char d /* data */;
+  
+  for (i = 0; i < 16; i++) {
+    d = font[i];
+    if ((d & 0x80) != 0) { vram[(y+i) * xsize + x + 0] = c; }
+    if ((d & 0x40) != 0) { vram[(y+i) * xsize + x + 1] = c; }
+    if ((d & 0x20) != 0) { vram[(y+i) * xsize + x + 2] = c; }
+    if ((d & 0x10) != 0) { vram[(y+i) * xsize + x + 3] = c; }
+    if ((d & 0x08) != 0) { vram[(y+i) * xsize + x + 4] = c; }
+    if ((d & 0x04) != 0) { vram[(y+i) * xsize + x + 5] = c; }
+    if ((d & 0x02) != 0) { vram[(y+i) * xsize + x + 6] = c; }
+    if ((d & 0x01) != 0) { vram[(y+i) * xsize + x + 7] = c; }
+  }
+  return;
 }
