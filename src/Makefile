@@ -32,14 +32,29 @@ asmhead.bin : asmhead.nas Makefile
 bootpack.gas : bootpack.c Makefile
 	$(CC1) -o bootpack.gas bootpack.c
 
+graphic.gas : graphic.c Makefile
+	$(CC1) -o graphic.gas graphic.c
+
+dsctbl.gas : dsctbl.c Makefile
+	$(CC1) -o dsctbl.gas dsctbl.c
+
 bootpack.nas : bootpack.gas Makefile
 	$(GAS2NASK) bootpack.gas bootpack.nas
+
+graphic.nas : graphic.nas Makefile
+	$(GAS2NASK) graphic.gas graphic.nas
+
+dsctbl.nas : dsctbl.gas Makefile
+	$(GAS2NASK) dsctbl.gas dsctbl.nas
 
 bootpack.obj : bootpack.nas Makefile
 	$(NASK) bootpack.nas bootpack.obj bootpack.lst
 
 naskfunc.obj : naskfunc.nas Makefile
 	$(NASK) naskfunc.nas naskfunc.obj naskfunc.lst
+
+graphic.obj : graphci.nas Makefile
+	$(NASK) graphic.nas graphic.obj graphic.lst
 
 hankaku.bin : hankaku.txt Makefile
 	$(MAKEFONT) hankaku.txt hankaku.bin
@@ -49,7 +64,7 @@ hankaku.obj : hankaku.bin Makefile
 
 bootpack.bim : bootpack.obj naskfunc.obj hankaku.obj Makefile
 	$(OBJ2BIM) @$(RULEFILE) out:bootpack.bim stack:3136k map:bootpack.map \
-	bootpack.obj naskfunc.obj hankaku.obj
+	bootpack.obj naskfunc.obj hankaku.obj graphic.obj
 # 3MB + 64KB = 3136KB
 
 bootpack.hrb : bootpack.bim Makefile
@@ -84,6 +99,7 @@ clean:
 	-$(DEL) *.gas
 	-$(DEL) *.obj
 	-$(DEL) bootpack.nas
+	-$(DEL) graphic.nas
 	-$(DEL) bootpack.map
 	-$(DEL) bootpack.bim
 	-$(DEL) bootpack.hrb
