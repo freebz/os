@@ -3,7 +3,7 @@ INCPATH	 = ../z_tools/haribote/
 
 MAKE	 = $(TOOLPATH)make.exe -r
 NASK	 = $(TOOLPATH)nask.exe
-CC1	 = $(TOOLPATH)cc1.exe -I$(PNCPATH) -Os -Wall -quiet
+CC1	 = $(TOOLPATH)cc1.exe -I$(INCPATH) -Os -Wall -quiet
 GAS2NASK = $(TOOLPATH)gas2nask.exe -a
 OBJ2BIM	 = $(TOOLPATH)obj2bim.exe
 MAKEFONT = $(TOOLPATH)makefont.exe
@@ -41,7 +41,7 @@ dsctbl.gas : dsctbl.c Makefile
 bootpack.nas : bootpack.gas Makefile
 	$(GAS2NASK) bootpack.gas bootpack.nas
 
-graphic.nas : graphic.nas Makefile
+graphic.nas : graphic.gas Makefile
 	$(GAS2NASK) graphic.gas graphic.nas
 
 dsctbl.nas : dsctbl.gas Makefile
@@ -53,8 +53,11 @@ bootpack.obj : bootpack.nas Makefile
 naskfunc.obj : naskfunc.nas Makefile
 	$(NASK) naskfunc.nas naskfunc.obj naskfunc.lst
 
-graphic.obj : graphci.nas Makefile
+graphic.obj : graphic.nas Makefile
 	$(NASK) graphic.nas graphic.obj graphic.lst
+
+dsctbl.obj : dsctbl.nas Makefile
+	$(NASK) dsctbl.nas dsctbl.obj dsctbl.lst
 
 hankaku.bin : hankaku.txt Makefile
 	$(MAKEFONT) hankaku.txt hankaku.bin
@@ -62,9 +65,9 @@ hankaku.bin : hankaku.txt Makefile
 hankaku.obj : hankaku.bin Makefile
 	$(BIN2OBJ) hankaku.bin hankaku.obj _hankaku
 
-bootpack.bim : bootpack.obj naskfunc.obj hankaku.obj Makefile
+bootpack.bim : bootpack.obj naskfunc.obj hankaku.obj graphic.obj dsctbl.obj Makefile
 	$(OBJ2BIM) @$(RULEFILE) out:bootpack.bim stack:3136k map:bootpack.map \
-	bootpack.obj naskfunc.obj hankaku.obj graphic.obj
+	bootpack.obj naskfunc.obj hankaku.obj graphic.obj dsctbl.obj
 # 3MB + 64KB = 3136KB
 
 bootpack.hrb : bootpack.bim Makefile
@@ -100,6 +103,7 @@ clean:
 	-$(DEL) *.obj
 	-$(DEL) bootpack.nas
 	-$(DEL) graphic.nas
+	-$(DEL) dsctbl.nas
 	-$(DEL) bootpack.map
 	-$(DEL) bootpack.bim
 	-$(DEL) bootpack.hrb
