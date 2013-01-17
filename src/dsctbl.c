@@ -1,28 +1,4 @@
-struct SEGMENT_DESCRIPTOR {
-  short limit_low, base_low;
-  char base_mid, access_right;
-  char limit_high, base_high;
-};
-
-struct GATE_DESCRIPTOR {
-  short offset_low, selector;
-  char dw_count, access_right;
-  short offset_high;
-};
-
-/* 다른 파일로 만든 함수가 있으면 C컴파일러에게 알려줌 */
-void load_gdtr(int limit, int addr);
-void load_idtr(int limit, int addr);
-void set_segmdesc(struct SEGMENT_DESCRIPTOR *sd, unsigned int limit,
-		  int base, int ar);
-void set_gatedesc(struct GATE_DESCRIPTOR *gd, int offset,
-		  int selector, int ar);
-
-struct BOOTINFO {
-  char cyls, leds, vmode, reserve;
-  short scrnx, scrny;
-  char *vram;
-};
+#include "bootpack.h"
 
 void init_gdtidt(void)
 {
