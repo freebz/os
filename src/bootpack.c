@@ -22,6 +22,8 @@ void HariMain(void)
   init_mouse_cursor8(mcursor, COL8_008484);
   putblock8_8(binfo->vram, binfo->scrnx, 16, 16, mx, my, mcursor, 16);
   
+  init_pic();
+
   for (;;) {
     io_hlt();  /* 이것으로 naskfunc.nas의 _io_hlt가 실행된다. */
   }
