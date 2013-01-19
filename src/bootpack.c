@@ -22,7 +22,12 @@ void HariMain(void)
   init_mouse_cursor8(mcursor, COL8_008484);
   putblock8_8(binfo->vram, binfo->scrnx, 16, 16, mx, my, mcursor, 16);
   
+  init_gdtidt();
   init_pic();
+  io_sti();	/* IDT/PIC의 초기화가 끝났으므로 CPU의 인터럽트 금지를 해제 */
+
+  io_out8(PIC0_IMR, 0xf9);	/* PIC1와 키보드를 허가 (11111001) */
+  io_out8(PIC1_IMR, 0xef);	/* 마우스를 허가 (11101111) */
 
   for (;;) {
     io_hlt();  /* 이것으로 naskfunc.nas의 _io_hlt가 실행된다. */
