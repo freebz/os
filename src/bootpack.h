@@ -12,6 +12,8 @@ struct BOOTINFO { /* 0x0ff0-0x0fff */
 /* naskfunc.nas */
 void io_hlt(void);
 void io_cli(void);
+void io_sti(void);
+void io_stihlt(void);
 void io_out8(int port, int data);
 int io_load_eflags(void);
 void io_store_eflags(int eflags);
@@ -92,3 +94,7 @@ void inthandler2c(int *esp);
 #define PIC1_ICW2	0x00a1
 #define PIC1_ICW3	0x00a1
 #define PIC1_ICW4	0x00a1
+
+struct KEYBUF {
+  unsigned char data, flag;
+};
