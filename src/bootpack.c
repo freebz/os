@@ -8,7 +8,7 @@ void HariMain(void)
   struct BOOTINFO *binfo = (struct BOOTINFO *) 0x0ff0;
   char s[40], mcursor[256];
   int mx, my;
-  unsigned char i;
+  int i, j;
 
   init_palette();
   init_screen(binfo->vram, binfo->scrnx, binfo->scrny);
@@ -33,13 +33,15 @@ void HariMain(void)
   io_out8(PIC1_IMR, 0xef);	/* 마우스를 허가 (11101111) */
 
   for (;;) {
-    //io_hlt();  /* 이것으로 naskfunc.nas의 _io_hlt가 실행된다. */
     io_cli();
-    if (keybuf.flag == 0) {
+    if (keybuf.next == 0) {
       io_stihlt();
     } else {
-      i = keybuf.data;
-      keybuf.flag = 0;
+      i = keybuf.data[0];
+      keybuf.next--;
+      for (j = 0; j < keybuf.next; j++) {
+	keybuf.data[j] = keybuf.data[j + 1];
+      }
       io_sti();
       sprintf(s, "%02X", i);
       boxfill8(binfo->vram, binfo->scrnx, COL8_008484, 0, 16, 15, 31);
