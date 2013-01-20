@@ -1,12 +1,12 @@
 #include <stdio.h>
 #include "bootpack.h"
 
-extern struct KEYBUF keybuf;
+extern struct FIFO8 keyfifo;
 
 void HariMain(void)
 {
   struct BOOTINFO *binfo = (struct BOOTINFO *) 0x0ff0;
-  char s[40], mcursor[256];
+  char s[40], mcursor[256], keybuf[32];
   int mx, my;
   int i, j;
 
@@ -31,18 +31,15 @@ void HariMain(void)
 
   io_out8(PIC0_IMR, 0xf9);	/* PIC1와 키보드를 허가 (11111001) */
   io_out8(PIC1_IMR, 0xef);	/* 마우스를 허가 (11101111) */
+  
+  fifo8_init(&keyfifo, 32, keybuf);
 
   for (;;) {
     io_cli();
-    if (keybuf.len == 0) {
+    if (fifo8_status(&keyfifo) == 0) {
       io_stihlt();
     } else {
-      i = keybuf.data[keybuf.next_r];
-      keybuf.len--;
-      keybuf.next_r++;
-      if (keybuf.next_r == 32) {
-	keybuf.next_r = 0;
-      }
+      i = fifo8_get(&keyfifo);
       io_sti();
       sprintf(s, "%02X", i);
       boxfill8(binfo->vram, binfo->scrnx, COL8_008484, 0, 16, 15, 31);
