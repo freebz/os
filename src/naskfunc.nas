@@ -123,5 +123,5 @@ _asm_inthandler2c:
 	POP	EAX
 	POPAD
 	POP	DS
-	POOP	ES
+	POP	ES
 	IRETD

@@ -1,3 +1,5 @@
+/* 그래픽 처리 관계 */
+
 #include "bootpack.h"
 
 void init_palette(void)

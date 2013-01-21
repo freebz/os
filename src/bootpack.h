@@ -14,6 +14,7 @@ void io_hlt(void);
 void io_cli(void);
 void io_sti(void);
 void io_stihlt(void);
+int io_in8(int port);
 void io_out8(int port, int data);
 int io_load_eflags(void);
 void io_store_eflags(int eflags);
@@ -77,7 +78,7 @@ void set_gatedesc(struct GATE_DESCRIPTOR *gd, int offset, int selector, int ar);
 #define AR_CODE32_ER	0x409a
 #define AR_INTGATE32	0x008e	/* IDT에 대한 속성 설정 : 인터럽트 처리용의 유효한 설정을 나타내는 마크 */
 
-/* init.c */
+/* int.c */
 void init_pic(void);
 void inthandler21(int *esp);
 void inthandler2c(int *esp);
@@ -105,3 +106,5 @@ void fifo8_init(struct FIFO8 *fifo, int size, unsigned char *buf);
 int fifo8_put(struct FIFO8 *fifo, unsigned char data);
 int fifo8_get(struct FIFO8 *fifo);
 int fifo8_status(struct FIFO8 *fifo);
+
+//#define FLAGS

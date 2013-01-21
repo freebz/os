@@ -1,4 +1,5 @@
-OBJS_BOOTPACK = bootpack.obj naskfunc.obj hankaku.obj graphic.obj dsctbl.obj int.obj fifo.obj
+OBJS_BOOTPACK = bootpack.obj naskfunc.obj hankaku.obj graphic.obj dsctbl.obj \
+		int.obj fifo.obj
 
 TOOLPATH = ../z_tools/
 INCPATH	 = ../z_tools/haribote/
@@ -18,7 +19,7 @@ COPY	 = copy
 DEL	 = del
 
 
-# 디폴트 동`																				작
+# 디폴트 동작
 
 default:
 	$(MAKE) img

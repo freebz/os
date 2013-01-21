@@ -130,7 +130,3 @@ GDTR0:
 	ALIGNB	16
 
 bootpack:	
-
-;fin:
-;	HLT
-;	JMP fin
