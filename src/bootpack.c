@@ -3,6 +3,9 @@
 
 extern struct FIFO8 keyfifo;
 
+void init_keyboard(void);
+void enable_mouse(void);
+
 void HariMain(void)
 {
   struct BOOTINFO *binfo = (struct BOOTINFO *) 0x0ff0;
@@ -34,6 +37,9 @@ void HariMain(void)
   
   fifo8_init(&keyfifo, 32, keybuf);
 
+  init_keyboard();
+  enable_mouse();
+ 
   for (;;) {
     io_cli();
     if (fifo8_status(&keyfifo) == 0) {
@@ -46,4 +52,45 @@ void HariMain(void)
       putfonts8_asc(binfo->vram, binfo->scrnx, 0, 16, COL8_FFFFFF, s);
     }
   }
+}
+
+#define PORT_KEYDAT	0x0060
+#define PORT_KEYSTA	0x0064
+#define PORT_KEYCMD	0x0064
+#define KEYSTA_SEND_NOTREADY	0x02
+#define KEYCMD_WRITE_MODE	0x60
+#define KBC_MODE		0x47
+
+void wait_KBC_sendready(void)
+{
+  /* 키보드 컨트롤러가 데이터 송신을 가능하게 해 주는 것을 기다린다. */
+  for (;;) {
+    if ((io_in8(PORT_KEYSTA) & KEYSTA_SEND_NOTREADY) == 0) {
+      break;
+    }
+  }
+  return;
+}
+
+void init_keyboard(void)
+{
+  /* 키보드 컨트롤러의 초기화 */
+  wait_KBC_sendready();
+  io_out8(PORT_KEYCMD, KEYCMD_WRITE_MODE);
+  wait_KBC_sendready();
+  io_out8(PORT_KEYDAT, KBC_MODE);
+  return;
+}
+
+#define KEYCMD_SENDTO_MOUSE	0xd4
+#define MOUSECMD_ENABLE		0xf4
+
+void enable_mouse(void)
+{
+  /* 마우스 유효 */
+  wait_KBC_sendready();
+  io_out8(PORT_KEYCMD, KEYCMD_SENDTO_MOUSE);
+  wait_KBC_sendready();
+  io_out8(PORT_KEYDAT, MOUSECMD_ENABLE);
+  return;	/* 잘 되면 ACK(0xfa)가 송된되어 온다. */
 }
