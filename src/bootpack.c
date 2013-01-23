@@ -7,6 +7,7 @@ extern struct FIFO8 keyfifo, mousefifo;
 
 struct MOUSE_DEC {
   unsigned char buf[3], phase;
+  int x, y, btn;
 };
 
 void init_keyboard(void);
@@ -58,9 +59,18 @@ void HariMain(void)
 	io_sti();
 	if (mouse_decode(&mdec, i) != 0) {
 	  /* 데이터가 3바이트 쌓였으므로 표시 */
-	  sprintf(s, "%02X %02X %02X", mdec.buf[0], mdec.buf[1], mdec.buf[2]);
+	  sprintf(s, "[lcr %4d %4d]", mdec.x, mdec.y);
+	  if ((mdec.btn & 0x01) != 0) {
+	    s[1] = 'L';
+	  }
+	  if ((mdec.btn & 0x02) != 0) {
+	    s[3] = 'R';
+	  }
+	  if ((mdec.btn & 0x04) != 0) {
+	    s[2] = 'C';
+	  }
 	  boxfill8(binfo->vram, binfo->scrnx, COL8_008484, 32, 16,
-		   32 + 8 * 8 - 1, 31);
+		   32 + 15 * 8 - 1, 31);
 	  putfonts8_asc(binfo->vram, binfo->scrnx, 32, 16, COL8_FFFFFF, s);
 	}
       }
@@ -136,6 +146,16 @@ int mouse_decode(struct MOUSE_DEC *mdec, unsigned char dat)
     /* 마우스의 3바이트째를 기다리고 있는 단계 */
     mdec->buf[2] = dat;
     mdec->phase = 1;
+    mdec->btn = mdec->buf[0] & 0x07;
+    mdec->x = mdec->buf[1];
+    mdec->y = mdec->buf[2];
+    if ((mdec->buf[0] & 0x10) != 0) {
+      mdec->x |= 0xffffff00;
+    }
+    if ((mdec->buf[0] & 0x20) != 0) {
+      mdec->y |= 0xffffff00;
+    }
+    mdec->y = - mdec->y;	/* 마우스에서는 y방향의 부호가 화면과 반대 */
     return 1;
   }
   return -1;	/* 여기에 올 일은 없을 것이다. */

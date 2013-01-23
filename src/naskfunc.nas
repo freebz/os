@@ -19,6 +19,7 @@
 ; 이하는 실제의 함수
 
 [SECTION .text]		; 오브젝트 파일에서는 이것을 쓴 후에 프로그램을 쓴다.
+
 _io_hlt: 		; void io_hlt(void);
 	HLT
 	RET
@@ -61,7 +62,7 @@ _io_out8:		;void io_out8(int port, int data);
 
 _io_out16:
 	MOV	EDX, [ESP+4]
-	MOV	AX, [ESP+8]
+	MOV	EAX, [ESP+8]
 	OUT	DX, AX
 	RET
 

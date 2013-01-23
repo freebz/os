@@ -43,7 +43,7 @@ int fifo8_get(struct FIFO8 *fifo)
   }
   data = fifo->buf[fifo->q];
   fifo->q++;
-  if (fifo->q == fifo->free) {
+  if (fifo->q == fifo->size) {
     fifo->q = 0;
   }
   fifo->free++;

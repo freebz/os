@@ -4,9 +4,9 @@
 
 void init_gdtidt(void)
 {
-  int i;
   struct SEGMENT_DESCRIPTOR *gdt = (struct SEGMENT_DESCRIPTOR *) ADR_GDT;
   struct GATE_DESCRIPTOR    *idt = (struct GATE_DESCRIPTOR    *) ADR_IDT;
+  int i;
   
   /* GDT의 초기화 */
   for (i = 0; i <= LIMIT_GDT / 8; i++) {
