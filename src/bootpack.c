@@ -36,6 +36,10 @@ void HariMain(void)
   sprintf(s, "(%d, %d)", mx, my);
   putfonts8_asc(binfo->vram, binfo->scrnx, 0, 0, COL8_FFFFFF, s);
 
+  i = memtest(0x00400000, 0xbfffffff) / (1024 * 1024);
+  sprintf(s, "memory %dMB", i);
+  putfonts8_asc(binfo->vram, binfo->scrnx, 0, 32, COL8_FFFFFF, s);
+
   enable_mouse(&mdec);
 
   for (;;) {
@@ -95,4 +99,63 @@ void HariMain(void)
       }
     }
   }
+}
+
+#define EFLAGS_AC_BIT		0x00040000
+#define CR0_CACHE_DISABLE	0X60000000
+
+unsigned int memtest(unsigned int start, unsigned int end)
+{
+  char flg486 = 0;
+  unsigned int eflg, cr0, i;
+
+  /* 386인가, 486 이후인가의 확인 */
+  eflg = io_load_eflags();
+  eflg |= EFLAGS_AC_BIT;	/* AC-bit = 1 */
+  io_store_eflags(eflg);
+  eflg = io_load_eflags();
+  if ((eflg & EFLAGS_AC_BIT) != 0) {
+    /* 386에서는 AC=1로 해도 자동으로 0이 되어 버린다. */
+    flg486 = 1;
+  }
+  eflg &= ~EFLAGS_AC_BIT;	/* AC-bit = 0 */
+  io_store_eflags(eflg);
+
+  if (flg486 != 0) {
+    cr0 = load_cr0();
+    cr0 |= CR0_CACHE_DISABLE;	/* 캐시 금지 */
+    store_cr0(cr0);
+  }
+
+  i = memtest_sub(start, end);
+
+  if (flg486 != 0) {
+    cr0 = load_cr0();
+    cr0 &= ~ CR0_CACHE_DISABLE;	/* 캐시 허가 */
+    store_cr0(cr0);
+  }
+
+  return i;
+}
+
+unsigned int memtest_sub(unsigned int start, unsigned int end)
+{
+  unsigned int i, *p, old, pat0 = 0xaa55aa55, pat1 = 0x55aa55aa;
+  for (i = start; i <= end; i += 0x1000) {
+    p = (unsigned int *) (i + 0xffc);
+    old = *p;		/* 조작 전의 값을 기억해 둔다. */
+    *p = pat0;		/* 시험 삼아 써 본다. */
+    *p ^= 0xffffffff;	/* 그리고 그것을 반전해 본다. */
+    if (*p != pat1) {	/* 반전이 되었는가? */
+    not_memory:
+      *p = old;
+      break;
+    }
+    *p ^= 0xffffffff;	/* 한번 더 반전해 본다. */
+    if (*p != pat0) {	/* 처음대로 돌아갔는가? */
+      goto not_memory;
+    }
+    *p = old;		/* 조작한 값을 처음 값으로 되돌린다. */
+  }
+  return i;
 }
