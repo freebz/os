@@ -134,3 +134,24 @@ void inthandler2c(int *esp);
 
 #define KEYCMD_SENDTO_MOUSE	0xd4
 #define MOUSECMD_ENABLE		0xf4
+
+/* memory.c */
+#define MEMMAN_ADDR	0x003c0000
+#define MEMMAN_FREES	4090	/* 이것으로 약 32KB 정도의 관리 영역이 필요 */
+
+struct FREEINFO {	/* 빈 정보 */
+  unsigned int addr, size;
+};
+
+struct MEMMAN {		/* 메모리 관리 */
+  int frees, maxfrees, lostsize, losts;
+  struct FREEINFO free[MEMMAN_FREES];
+};
+
+unsigned int memtest(unsigned int start, unsigned int end);
+void memman_init(struct MEMMAN *man);
+unsigned int memman_total(struct MEMMAN *man);
+unsigned int memman_alloc(struct MEMMAN *man, unsigned int size);
+int memman_free(struct MEMMAN *man, unsigned int addr, unsigned int size);
+unsigned int memman_alloc_4k(struct MEMMAN *man, unsigned int size);
+int memman_free_4k(struct MEMMAN *man, unsigned int addr, unsigned int size);
