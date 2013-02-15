@@ -29,6 +29,11 @@ VRAM	    EQU 0x0ff8		; 그래픽 버터의 개시 번지
 	INT    0x16		; keyboard BIOS
 	MOV    [LEDS], AL
 
+; PIC가 일절의 인터럽트를 받아들이지 않게 한다.
+; AT호환기의 사양에서는 PIC의 초기화를 한다면,
+; 이것들의 CLI앞에 해 두지 않으면 이따금 행업 한다.
+; PIC의 초기화는 나중에 한다.
+
 	MOV    AL, 0xff
 	OUT    0x21, AL
 	NOP
@@ -36,12 +41,13 @@ VRAM	    EQU 0x0ff8		; 그래픽 버터의 개시 번지
 
 	CLI
 
+; CPU로부터 1MB이상의 메모리에 엑세스 할 수 있도록, A20GATE를 설정
 
 	CALL	waitkbdout
 	MOV	AL, 0xd1
 	OUT	0x64, AL
 	CALL	waitkbdout
-	MOV	AL, 0xdf
+	MOV	AL, 0xdf	; enable A20
 	OUT	0x60, AL
 	CALL	waitkbdout
 
@@ -71,7 +77,7 @@ pipelineflush:
 
 ;디스크 데이터도 본래의 위치에 전송
 
-; boot sector
+; 우선은 boot sector로부터
 
        MOV	ESI, 0x7c00
        MOV	EDI, DSKCAC

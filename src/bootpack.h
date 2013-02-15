@@ -111,16 +111,13 @@ int fifo8_get(struct FIFO8 *fifo);
 int fifo8_status(struct FIFO8 *fifo);
 
 /* keyboard.c */
+void inthandler21(int *esp);
 void wait_KBC_sendready(void);
 void init_keyboard(void);
-void inthandler21(int *esp);
+extern struct FIFO8 keyfifo;
 
 #define PORT_KEYDAT		0x0060
-#define PORT_KEYSTA		0x0064
 #define PORT_KEYCMD		0x0064
-#define KEYSTA_SEND_NOTREADY	0x02
-#define KEYCMD_WRITE_MODE	0x60
-#define KBC_MODE		0x47
 
 /* mouse.c */
 struct MOUSE_DEC {
@@ -128,9 +125,11 @@ struct MOUSE_DEC {
   int x, y, btn;
 };
 
+void inthandler2c(int *esp);
 void enable_mouse(struct MOUSE_DEC *mdec);
 int mouse_decode(struct MOUSE_DEC *mdec, unsigned char dat);
-void inthandler2c(int *esp);
+extern struct FIFO8 mousefifo;
+
 
 #define KEYCMD_SENDTO_MOUSE	0xd4
 #define MOUSECMD_ENABLE		0xf4
@@ -155,3 +154,28 @@ unsigned int memman_alloc(struct MEMMAN *man, unsigned int size);
 int memman_free(struct MEMMAN *man, unsigned int addr, unsigned int size);
 unsigned int memman_alloc_4k(struct MEMMAN *man, unsigned int size);
 int memman_free_4k(struct MEMMAN *man, unsigned int addr, unsigned int size);
+
+/* sheet.c */
+#define MAX_SHEETS	256
+
+struct SHEET {
+  unsigned char *buf;
+  int bxsize, bysize, vx0, vy0, col_inv, height, flags;
+};
+
+struct SHTCTL {
+  unsigned char *vram;
+  int xsize, ysize, top;
+  struct SHEET *sheets[MAX_SHEETS];
+  struct SHEET sheets0[MAX_SHEETS];
+};
+
+struct SHTCTL *shtclt_init(struct MEMMAN *memman, unsigned char *vram,
+			     int xsize, int ysize);
+struct SHEET *sheet_alloc(struct SHTCTL *ctl);
+void sheet_setbuf(struct SHEET *sht, unsigned char *buf,
+		    int xsize, int ysize, int col_inv);
+void sheet_updown(struct SHTCTL *ctl, struct SHEET *sht, int height);
+void sheet_refresh(struct SHTCTL *ctl);
+void sheet_slide(struct SHTCTL *ctl, struct SHEET *sht, int vx0, int vy0);
+void sheet_free(struct SHTCTL *ctl, struct SHEET *sht);
