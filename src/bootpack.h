@@ -178,6 +178,6 @@ void sheet_setbuf(struct SHEET *sht, unsigned char *buf,
 		    int xsize, int ysize, int col_inv);
 void sheet_updown(struct SHEET *sht, int height);
 void sheet_refresh(struct SHEET *sht, int bx0, int bx1, int by0, int by1);
-void sheet_refreshsub(struct SHTCTL *ctl, int bx0, int bx1, int by0, int by1);
+void sheet_refreshsub(struct SHTCTL *ctl, int bx0, int bx1, int by0, int by1, int h0);
 void sheet_slide(struct SHEET *sht, int vx0, int vy0);
 void sheet_free(struct SHEET *sht);
