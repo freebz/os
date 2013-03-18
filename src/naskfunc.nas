@@ -17,6 +17,8 @@
       EXTERN	  _inthandler21, _inthandler2c
       GLOBAL	  _load_cr0, _store_cr0
       GLOBAL	  _memtest_sub
+      GLOBAL	  _asm_inthandler20
+      EXTERN	  _inthandler20
 
 ; 이하는 실제의 함수
 
@@ -170,3 +172,19 @@ mts_fin:
 	POP	ESI
 	POP	EDI
 	RET
+
+_asm_inthandler20:
+	PUSH	ES
+	PUSH	DS
+	PUSHAD
+	MOV	EAX, ESP
+	PUSH	EAX
+	MOV	AX, SS
+	MOV	DS, AX
+	MOV	ES, AX
+	CALL	inthandler20
+	POP	EAX
+	POPAD
+	POP	DS
+	POP	ES
+	IRETD	

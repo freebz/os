@@ -25,6 +25,7 @@ void asm_inthandler2c(void);
 int load_cr0(void);
 void store_cr0(int cr0);
 unsigned int memtest_sub(unsigned int start, unsigned int end);
+void asm_inthandler20(void);
 
 /* graphic.c */
 void init_palette(void);
@@ -182,3 +183,7 @@ void sheet_refreshsub(struct SHTCTL *ctl, int bx0, int bx1, int by0, int by1, in
 void sheet_slide(struct SHEET *sht, int vx0, int vy0);
 void sheet_free(struct SHEET *sht);
 void sheet_refreshmap(struct SHTCTL *ctl, int vx0, int vy0, int vx1, int vy1, int h0);
+
+/* timer.c */
+void init_pit(void);
+void inthandler20(int *esp);
