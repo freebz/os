@@ -41,9 +41,6 @@ void HariMain(void)
   timer_init(timer3, &timerfifo3, 1);
   timer_settime(timer3, 50);
   
-  //init_pit();
-  //settimer(1000, &timerfifo, 1);
-
   io_out8(PIC0_IMR, 0xf8);	/* PIT, PIC1, 키보드를 허가 (11111000) */
   io_out8(PIC1_IMR, 0xef);	/* 마우스를 허가 (11101111) */
 
@@ -72,8 +69,6 @@ void HariMain(void)
   init_mouse_cursor8(buf_mouse, 99);
 
   make_window8(buf_win, 160, 52, "counter");
-  //putfonts8_asc(buf_win, 160, 24, 28, COL8_000000, "Welcome to");
-  //putfonts8_asc(buf_win, 160, 24, 44, COL8_000000, " Haribote-OS!");
 
   sheet_slide(sht_back, 0, 0);
   mx = (binfo->scrnx - 16) / 2;	/* 화면 중앙이 되도록 좌표 계산 */
@@ -89,7 +84,6 @@ void HariMain(void)
   putfonts8_asc(buf_back, binfo->scrnx, 0, 0, COL8_FFFFFF, s);
 
   
-  //  putblock8_8(binfo->vram, binfo->scrnx, 16, 16, mx, my, mcursor, 16);
   sprintf(s, "memory %dMB    free : %dKB",
 	  memtotal / (1024 * 1024), memman_total(memman) / 1024);
   putfonts8_asc(buf_back, binfo->scrnx, 0, 32, COL8_FFFFFF, s);
@@ -135,7 +129,6 @@ void HariMain(void)
 	  sheet_refresh(sht_back, 32, 16, 32 + 15 * 8, 32);
 
 	  /* 마우스 커서의 이동 */
-	  //boxfill8(binfo->vram, binfo->scrnx, COL8_008484, mx, my, mx + 15, my + 15);	/* 마우스 없앰 */
 	  mx += mdec.x;
 	  my += mdec.y;
 	  if (mx < 0) {
@@ -159,7 +152,6 @@ void HariMain(void)
 	  sheet_slide(sht_mouse, mx, my);
 	  /* sheet_refresh를 포함한다. */
 
-	  //	  putblock8_8(binfo->vram, binfo->scrnx, 16, 16, mx, my, mcursor, 16);
 	  /* 마우스 그리기 */
 	}
       } else if (fifo8_status(&timerfifo) != 0) {
