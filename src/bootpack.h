@@ -204,14 +204,15 @@ void inthandler20(int *esp);
 #define MAX_TIMER	500
 
 struct TIMER {
+  struct TIMER *next;
   unsigned int timeout, flags;
   struct FIFO32 *fifo;
-  unsigned char data;
+  int data;
 };
 
 struct TIMERCTL {
   unsigned int count, next, using;
-  struct TIMER *timers[MAX_TIMER];
+  struct TIMER *t0;
   struct TIMER timers0[MAX_TIMER];
 };
 
