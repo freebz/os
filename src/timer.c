@@ -13,15 +13,21 @@ struct TIMERCTL timerctl;
 void init_pit(void)
 {
   int i;
+  struct TIMER *t;
   io_out8(PIT_CTRL, 0x34);
   io_out8(PIT_CNT0, 0x9c);
   io_out8(PIT_CNT0, 0x2e);
   timerctl.count = 0;
-  timerctl.next = 0xffffffff;
-  timerctl.using = 0;
   for (i = 0; i < MAX_TIMER; i++) {
     timerctl.timers0[i].flags = 0;	/* 미사용 */
   }
+  t = timer_alloc();	/* 1개를 받아 온다. */
+  t->timeout = 0xffffffff;
+  t->flags = TIMER_FLAGS_USING;
+  t->next = 0;	/* 제일 뒤 */
+  timerctl.t0 = t;	/* 지금은 Sentinel밖에 없기 때문에 선두이기도 하다. */
+  timerctl.next = 0xffffffff; /* Sentinel밖에 없기 때문에 Sentinel의 시작임 */
+  timerctl.using = 1;
   return;
 }
 
@@ -59,14 +65,6 @@ void timer_settime(struct TIMER *timer, unsigned int timeout)
   e = io_load_eflags();
   io_cli();
   timerctl.using++;
-  if (timerctl.using == 1) {
-    /* 동작 중의 타이머가 1개인 경우 */
-    timerctl.t0 = timer;
-    timer->next = 0;	/* 다음은 없다. */
-    timerctl.next = timer->timeout;
-    io_store_eflags(e);
-    return;
-  }
   t = timerctl.t0;
   if (timer->timeout <= t->timeout) {
     /* 선두에 들어갈 수 있는 경우 */
@@ -91,11 +89,6 @@ void timer_settime(struct TIMER *timer, unsigned int timeout)
       return;
     }
   }
-  /* 제일 뒤에 들어갈 수 있는 경우 */
-  s->next = timer;
-  timer->next = 0;
-  io_store_eflags(e);
-  return;
 }
 
 void inthandler20(int *esp)
@@ -107,7 +100,6 @@ void inthandler20(int *esp)
   if (timerctl.next > timerctl.count) {
     return;
   }
-  //  timerctl.next = 0xffffffff;
   timer = timerctl.t0;	/* 우선 선두 번지를 timer에 대입 */
   for (i = 0; i < timerctl.using; i++) {
     /* timers의 타이머는 모두 동작 중이므로 flags를 확인하지 않는다. */
@@ -126,10 +118,6 @@ void inthandler20(int *esp)
   timerctl.t0 = timer;
   
   /* timerctl.next의 설정 */
-  if (timerctl.using > 0) {
-    timerctl.next = timerctl.t0->timeout;
-  } else {
-    timerctl.next = 0xffffffff;
-  }
+  timerctl.next = timerctl.t0->timeout;
   return;
 }
