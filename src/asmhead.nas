@@ -15,13 +15,18 @@ VRAM	    EQU 0x0ff8		; 그래픽 버터의 개시 번지
 
 	ORG	0xc200		; 이 프로그램이 어디에 로딩되는가
 
-	MOV	AL, 0x13	; VGA 그래픽스, 320x200x8bit 컬러
-	MOV	AH, 0x00
+;	MOV	AL, 0x13	; VGA 그래픽스, 320x200x8bit 컬러
+;	MOV	AH, 0x00
+	MOV	BX, 0x4101	; VBE의 640x480x8bit 컬러
+	MOV	AX, 0x4f02
 	INT	0x10
 	MOV	BYTE [VMODE], 8	; 화면 모드를 메모한다.
-	MOV	WORD [SCRNX], 320
-	MOV	WORD [SCRNY], 200
-	MOV	DWORD [VRAM], 0x000a0000
+;	MOV	WORD [SCRNX], 320
+;	MOV	WORD [SCRNY], 200
+;	MOV	DWORD [VRAM], 0x000a0000
+	MOV	WORD [SCRNX], 640
+	MOV	WORD [SCRNY], 480
+	MOV	DWORD [VRAM], 0xe0000000
 
 ; 키보드의 LED 상태를 BIOS가 알려준다.
 
