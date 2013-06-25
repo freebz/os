@@ -218,3 +218,8 @@ struct TIMERCTL {
 };
 
 extern struct TIMERCTL timerctl;
+
+/* mtask.c */
+extern struct TIMER *mt_timer;
+void mt_init(void);
+void mt_taskswitch(void);

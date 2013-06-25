@@ -93,31 +93,36 @@ void timer_settime(struct TIMER *timer, unsigned int timeout)
 
 void inthandler20(int *esp)
 {
-  int i;
   struct TIMER *timer;
+  char ts = 0;
   io_out8(PIC0_OCW2, 0x60);	/* IRQ-00 접수 완료를 PIC에 통지 */
   timerctl.count++;
   if (timerctl.next > timerctl.count) {
     return;
   }
   timer = timerctl.t0;	/* 우선 선두 번지를 timer에 대입 */
-  for (i = 0; i < timerctl.using; i++) {
+  for (;;) {
     /* timers의 타이머는 모두 동작 중이므로 flags를 확인하지 않는다. */
     if (timer->timeout > timerctl.count) {
       break;
     }
     /* 타임아웃 */
     timer->flags = TIMER_FLAGS_ALLOC;
-    fifo32_put(timer->fifo, timer->data);
+    if (timer != mt_timer) {
+      fifo32_put(timer->fifo, timer->data);
+    } else {
+      ts = 1; /* mt_timer가 타임아웃되었다. */
+    }
     timer = timer->next;	/* 다음에 올 타이머 번지를 timer에 대입 */
   }
-  /* 정확히 i개의 타이머가 타임아웃되었다. 나머지를 다른 곳으로 옮겨 놓는다. */
-  timerctl.using -= i;
 
   /* 새로운 곳으로 이동시킴 */
   timerctl.t0 = timer;
   
   /* timerctl.next의 설정 */
   timerctl.next = timerctl.t0->timeout;
+  if (ts != 0) {
+    mt_taskswitch();
+  }
   return;
 }
