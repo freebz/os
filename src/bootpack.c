@@ -162,9 +162,11 @@ void HariMain(void)
 	  /* 좌표 쓰기 */
 	  sheet_refresh(sht_back, 0, 0, 80, 16);
 	  sheet_slide(sht_mouse, mx, my);
-	  /* sheet_refresh를 포함한다. */
 
-	  /* 마우스 그리기 */
+	  if ((mdec.btn & 0x01) != 0) {
+	    /* 왼쪽 버튼을 누르고 있으면 sht_win이 움직인다. */
+	    sheet_slide(sht_win, mx - 80, my - 8);
+	  }
 	}
       } else if (i == 10) { /* 10초 타이머 */
 	putfonts8_asc_sht(sht_back, 0, 64, COL8_FFFFFF,
