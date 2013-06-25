@@ -19,7 +19,7 @@
       GLOBAL	  _memtest_sub
       GLOBAL	  _asm_inthandler20
       EXTERN	  _inthandler20
-      GLOBAL	  _load_tr, _taskswitch4
+      GLOBAL	  _load_tr, _taskswitch4, _taskswitch3
 
 ; 이하는 실제의 함수
 
@@ -196,4 +196,8 @@ _load_tr:	; void load_tr(int tr);
 
 _taskswitch4:	; void taskswitch4(void);
 	JMP	4*8:0
+	RET
+
+_taskswitch3:	; void taskswitch3(void);
+	JMP	3*8:0
 	RET
