@@ -66,7 +66,7 @@ void HariMain(void)
   init_screen(buf_back, binfo->scrnx, binfo->scrny);
   init_mouse_cursor8(buf_mouse, 99);
 
-  make_window8(buf_win, 160, 52, "counter");
+  make_window8(buf_win, 160, 52, "window");
 
   sheet_slide(sht_back, 0, 0);
   mx = (binfo->scrnx - 16) / 2;	/* 화면 중앙이 되도록 좌표 계산 */
@@ -87,18 +87,18 @@ void HariMain(void)
   sheet_refresh(sht_back, 0, 0, binfo->scrnx, 48);
 
   for (;;) {
-    sprintf(s, "%010d", timerctl.count);
-    putfonts8_asc_sht(sht_win, 40, 28, COL8_000000, COL8_C6C6C6, s, 10);
-
     io_cli();
     if (fifo32_status(&fifo) == 0) {
-      io_sti();
+      io_stihlt();
     } else {
       i = fifo32_get(&fifo);
       io_sti();
       if (256 <= i && i <= 511) { /* 키보드 데이터 */
 	sprintf(s, "%02X", i - 256);
 	putfonts8_asc_sht(sht_back, 0, 16, COL8_FFFFFF, COL8_008484, s, 2);
+	if (i == 0x1e + 256) {
+	  putfonts8_asc_sht(sht_win, 40, 28, COL8_000000, COL8_C6C6C6, "A", 1);
+	}
       } else if (512 <= i && i <= 767) { /* 마우스 데이터 */
 	if (mouse_decode(&mdec, i - 512) != 0) {
 	  /* 데이터가 3바이트 쌓였으므로 표시 */
