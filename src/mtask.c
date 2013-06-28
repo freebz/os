@@ -76,3 +76,40 @@ void task_switch(void)
   }
   return;
 }
+
+void task_sleep(struct TASK *task)
+{
+  int i;
+  char ts = 0;
+  if (task->flags == 2) { /* 지정한 태스크가 만약 깨어 있으면 */
+    if (task == taskctl->tasks[taskctl->now]) {
+      ts = 1; /* 자기 자신을 재우므로, 나중에 태스크를 스위치한다. */
+    }
+    /* task가 어디에 있는지 찾는다. */
+    for (i = 0; i < taskctl->running; i++) {
+      if (taskctl->tasks[i] == task) {
+	/* 여기에 있었다. */
+	break;
+      }
+    }
+    taskctl->running--;
+    if (i < taskctl->now) {
+      taskctl->now--; /* 어긋나 있으므로, 이것도 맞추어 둔다. */
+    }
+    /* 옮겨 놓기 */
+    for (; i < taskctl->running; i++) {
+      taskctl->tasks[i] = taskctl->tasks[i + 1];
+    }
+    task->flags = 1; /* 동작하고 있지 않은 상태 */
+    if (ts != 0) {
+      /* 태스크를 스위치한다. */
+      if (taskctl->now >= taskctl->running) {
+	/* now가 이상한 값이 되어 있으면, 수정한다. */
+	taskctl->now = 0;
+      }
+      farjmp(0, taskctl->tasks[taskctl->now]->sel);
+    }
+  }
+  return;
+}
+

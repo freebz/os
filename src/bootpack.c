@@ -33,14 +33,14 @@ void HariMain(void)
     0,   0,   0,   0,   0,   0,   0,   '7', '8', '9', '-', '4', '5', '6', '+', '1',
     '2', '3', '0', '.'
   };
-  struct TASK *task_b;
+  struct TASK *task_a, *task_b;
 
   init_gdtidt();
   init_pic();
   init_pit();
   io_sti();	/* IDT/PIC의 초기화가 끝났으므로 CPU의 인터럽트 금지를 해제 */
   
-  fifo32_init(&fifo, 128, fifobuf);
+  fifo32_init(&fifo, 128, fifobuf, 0);
   init_keyboard(&fifo, 256);
   enable_mouse(&fifo, 512, &mdec);
   io_out8(PIC0_IMR, 0xf8);	/* PIT, PIC1, 키보드를 허가 (11111000) */
@@ -101,9 +101,8 @@ void HariMain(void)
   putfonts8_asc(buf_back, binfo->scrnx, 0, 32, COL8_FFFFFF, s);
   sheet_refresh(sht_back, 0, 0, binfo->scrnx, 48);
 
-
-
-  task_init(memman);
+  task_a = task_init(memman);
+  fifo.task = task_a;
   task_b = task_alloc();
   task_b->tss.esp = memman_alloc_4k(memman, 64 * 1024) + 64 * 1024 - 8;
   task_b->tss.eip = (int) &task_b_main;
@@ -116,35 +115,11 @@ void HariMain(void)
   *((int *) (task_b->tss.esp + 4)) = (int) sht_back;
   task_run(task_b);
 
-  /*
-  set_segmdesc(gdt + 3, 103, (int) &tss_a, AR_TSS32);
-  set_segmdesc(gdt + 4, 103, (int) &tss_b, AR_TSS32);
-  load_tr(3 * 8);
-  task_b_esp = memman_alloc_4k(memman, 64 * 1024) + 64 * 1024 - 8;
-  tss_b.eip = (int) &task_b_main;
-  tss_b.eflags = 0x00000202; /* IF = 1; *
-  tss_b.eax = 0;
-  tss_b.ecx = 0;
-  tss_b.edx = 0;
-  tss_b.ebx = 0;
-  tss_b.esp = task_b_esp;
-  tss_b.ebp = 0;
-  tss_b.esi = 0;
-  tss_b.edi = 0;
-  tss_b.es = 1 * 8;
-  tss_b.cs = 2 * 8;
-  tss_b.ss = 1 * 8;
-  tss_b.ds = 1 * 8;
-  tss_b.fs = 1 * 8;
-  tss_b.gs = 1 * 8;
-  *((int *) (task_b_esp + 4)) = (int) sht_back;
-  mt_init();
-*/
-
   for (;;) {
     io_cli();
     if (fifo32_status(&fifo) == 0) {
-      io_stihlt();
+      task_sleep(task_a);
+      io_sti();
     } else {
       i = fifo32_get(&fifo);
       io_sti();
@@ -312,7 +287,7 @@ void task_b_main(struct SHEET *sht_back)
   int i, fifobuf[128], count = 0, count0 = 0;
   char s[12];
 
-  fifo32_init(&fifo, 128, fifobuf);
+  fifo32_init(&fifo, 128, fifobuf, 0);
   timer_put = timer_alloc();
   timer_init(timer_put, &fifo, 1);
   timer_settime(timer_put, 1);
