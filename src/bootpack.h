@@ -26,6 +26,7 @@ int load_cr0(void);
 void store_cr0(int cr0);
 unsigned int memtest_sub(unsigned int start, unsigned int end);
 void asm_inthandler20(void);
+void farjmp(int eip, int cs);
 
 /* graphic.c */
 void init_palette(void);
@@ -220,6 +221,30 @@ struct TIMERCTL {
 extern struct TIMERCTL timerctl;
 
 /* mtask.c */
-extern struct TIMER *mt_timer;
-void mt_init(void);
-void mt_taskswitch(void);
+#define MAX_TASKS	1000	/* 최대 태스크의 수 */
+#define TASK_GDT0	3	/* TSS를 GDT의 몇 번부터 할당하는가 */
+
+struct TSS32 {
+  int backlink, esp0, ss0, esp1, ss1, esp2, ss2, cr3;
+  int eip, eflags, eax, ecx, edx, ebx, esp, ebp, esi, edi;
+  int es, cs, ss, ds, fs, gs;
+  int ldtr, iomap;
+};
+
+struct TASK {
+  int sel, flags; /* sel은 GDT의 번호 */
+  struct TSS32 tss;
+};
+
+struct TASKCTL {
+  int running; /* 동작하고 있는 태스크 수 */
+  int now; /* 현재 동작하고 있는 태스크가 어떤 것인지 알 수 있도록 하기 위한 변수 */
+  struct TASK *tasks[MAX_TASKS];
+  struct TASK tasks0[MAX_TASKS];
+};
+
+extern struct TIMER *task_timer;
+struct TASK *task_init(struct MEMMAN *memman);
+struct TASK *task_alloc(void);
+void task_run(struct TASK *task);
+void task_switch(void);
