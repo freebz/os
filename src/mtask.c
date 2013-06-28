@@ -19,6 +19,7 @@ struct TASK *task_init(struct MEMMAN *memman)
   }
   task = task_alloc();
   task->flags = 2; /* 동작 중 마크 */
+  task->priority = 2; /* 0.02초 */
   taskctl->running = 1;
   taskctl->now = 0;
   taskctl->tasks[0] = task;
@@ -56,23 +57,30 @@ struct TASK *task_alloc(void)
   return 0; /* 벌써 전부 사용 중*/
 }
 
-void task_run(struct TASK *task)
+void task_run(struct TASK *task, int priority)
 {
-  task->flags = 2; /* 동작 중 마크 */
-  taskctl->tasks[taskctl->running] = task;
-  taskctl->running++;
+  if (priority > 0) {
+    task->priority = priority;
+  }
+  if (task->flags != 2) {
+    task->flags = 2; /* 동작 중 마크 */
+    taskctl->tasks[taskctl->running] = task;
+    taskctl->running++;
+  }
   return;
 }
 
 void task_switch(void)
 {
-  timer_settime(task_timer, 2);
+  struct TASK *task;
+  taskctl->now++;
+  if (taskctl->now == taskctl->running) {
+    taskctl-> now = 0;
+  }
+  task = taskctl->tasks[taskctl->now];
+  timer_settime(task_timer, task->priority);
   if (taskctl->running >= 2) {
-    taskctl->now++;
-    if (taskctl->now == taskctl->running) {
-      taskctl->now = 0;
-    }
-    farjmp(0, taskctl->tasks[taskctl->now]->sel);
+    farjmp(0, task->sel);
   }
   return;
 }

@@ -84,15 +84,15 @@ void HariMain(void)
     task_b[i]->tss.fs = 1 * 8;
     task_b[i]->tss.gs = 1 * 8;
     *((int *) (task_b[i]->tss.esp + 4)) = (int) sht_win_b[i];
-    task_run(task_b[i]);
+    task_run(task_b[i], i + 1);
   }
 
   /* sht_win */
   sht_win = sheet_alloc(shtctl);
   buf_win = (unsigned char *) memman_alloc_4k(memman, 160 * 52);
-  sheet_setbuf(sht_win, buf_win, 160, 52, -1);		/* 투명색 없음 */
-  make_window8(buf_win, 160, 52, "task_a", 1);
-  make_textbox8(sht_win, 8, 28, 144, 16, COL8_FFFFFF);
+  sheet_setbuf(sht_win, buf_win, 144, 52, -1);		/* 투명색 없음 */
+  make_window8(buf_win, 144, 52, "task_a", 1);
+  make_textbox8(sht_win, 8, 28, 128, 16, COL8_FFFFFF);
   cursor_x = 8;
   cursor_c = COL8_FFFFFF;
   timer = timer_alloc();
