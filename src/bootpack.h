@@ -224,6 +224,8 @@ extern struct TIMERCTL timerctl;
 /* mtask.c */
 #define MAX_TASKS	1000	/* 최대 태스크의 수 */
 #define TASK_GDT0	3	/* TSS를 GDT의 몇 번부터 할당하는가 */
+#define MAX_TASKS_LV	100
+#define MAX_TASKLEVELS	10
 
 struct TSS32 {
   int backlink, esp0, ss0, esp1, ss1, esp2, ss2, cr3;
@@ -234,20 +236,26 @@ struct TSS32 {
 
 struct TASK {
   int sel, flags; /* sel은 GDT의 번호 */
-  int priority;
+  int level, priority;
   struct TSS32 tss;
 };
 
-struct TASKCTL {
+struct TASKLEVEL {
   int running; /* 동작하고 있는 태스크 수 */
   int now; /* 현재 동작하고 있는 태스크가 어떤 것인지 알 수 있도록 하기 위한 변수 */
-  struct TASK *tasks[MAX_TASKS];
+  struct TASK *tasks[MAX_TASKS_LV];
+};
+
+struct TASKCTL {
+  int now_lv; /* 현재 동작중인 레벨 */
+  char lv_change; /* 다음 번 태스크를 스위치할 때 레벨도 바꾸는 편이 좋은지 어떤지 */
+  struct TASKLEVEL level[MAX_TASKLEVELS];
   struct TASK tasks0[MAX_TASKS];
 };
 
 extern struct TIMER *task_timer;
 struct TASK *task_init(struct MEMMAN *memman);
 struct TASK *task_alloc(void);
-void task_run(struct TASK *task, int priority);
+void task_run(struct TASK *task, int level,  int priority);
 void task_switch(void);
 void task_sleep(struct TASK *task);
