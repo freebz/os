@@ -131,19 +131,29 @@ void HariMain(void)
       if (256 <= i && i <= 511) { /* 키보드 데이터 */
 	sprintf(s, "%02X", i - 256);
 	putfonts8_asc_sht(sht_back, 0, 16, COL8_FFFFFF, COL8_008484, s, 2);
-	if (i < 0x54 + 256) {
-	  if (keytable[i - 256] != 0 && cursor_x < 144) { /* 통상 문자 */
-	    /* 한 글자 표시한 후 커서를 1개 진행 */
-	    s[0] = keytable[i - 256];
-	    s[1] = 0;
-	    putfonts8_asc_sht(sht_win, cursor_x, 28, COL8_000000, COL8_FFFFFF, s, 1);
-	    cursor_x += 8;
+	if (i < 0x54 + 256 && keytable[i - 256] != 0) { /* 통상 문자 */
+	  if (key_to == 0) { /* 태스크A에 */
+	    if (cursor_x < 128) {
+	      /* 한 글자 표시한 후 커서를 1개 진행 */
+	      s[0] = keytable[i - 256];
+	      s[1] = 0;
+	      putfonts8_asc_sht(sht_win, cursor_x, 28, COL8_000000, COL8_FFFFFF, s, 1);
+	      cursor_x += 8;
+	    }
+	  } else { /* 콘솔에 */
+	    fifo32_put(&task_cons->fifo, keytable[i-256] + 256);
 	  }
 	}
 	if (i == 256 + 0x0e && cursor_x > 8) { /* 백 스페이스 */
-	  /* 커서를 스페이스로 지우고 나서 커서를 1개 back */
-	  putfonts8_asc_sht(sht_win, cursor_x, 28, COL8_000000, COL8_FFFFFF, " ", 1);
-	  cursor_x -= 8;
+	  if (key_to == 0) { /* 태스크A에 */
+	    if (cursor_x > 8) {
+	      /* 커서를 스페이스로 지우고 나서 커서를 1개 back */
+	      putfonts8_asc_sht(sht_win, cursor_x, 28, COL8_000000, COL8_FFFFFF, " ", 1);
+	      cursor_x -= 8;
+	    }
+	  } else { /* 콘솔에 */
+	    fifo32_put(&task_cons->fifo, 8 + 256);
+	  }
 	}
 	if (i == 256 + 0x0f) { /* 탭 */
 	  if (key_to == 0) {
@@ -307,37 +317,59 @@ void make_textbox8(struct SHEET *sht, int x0, int y0, int sx, int sy, int c)
 
 void console_task(struct SHEET *sheet)
 {
-  struct FIFO32 fifo;
   struct TIMER *timer;
   struct TASK *task = task_now();
+  int i, fifobuf[128], cursor_x = 16, cursor_c = COL8_000000;
+  char s[2];
 
-  int i, fifobuf[128], cursor_x = 8, cursor_c = COL8_000000;
-  fifo32_init(&fifo, 128, fifobuf, task);
-
+  fifo32_init(&task->fifo, 128, fifobuf, task);
   timer = timer_alloc();
-  timer_init(timer, &fifo, 1);
+  timer_init(timer, &task->fifo, 1);
   timer_settime(timer, 50);
+
+  /* 프롬프트 표시 */
+  putfonts8_asc_sht(sheet, 8, 28, COL8_FFFFFF, COL8_000000, ">", 1);
 
   for (;;) {
     io_cli();
-    if (fifo32_status(&fifo) == 0) {
+    if (fifo32_status(&task->fifo) == 0) {
       task_sleep(task);
       io_sti();
     } else {
-      i = fifo32_get(&fifo);
+      i = fifo32_get(&task->fifo);
       io_sti();
       if (i <= 1) { /* 커서용 타이머 */
 	if (i != 0) {
-	  timer_init(timer, &fifo, 0); /* 다음은 0을 */
+	  timer_init(timer, &task->fifo, 0); /* 다음은 0을 */
 	  cursor_c = COL8_FFFFFF;
 	} else {
-	  timer_init(timer, &fifo, 1); /* 다음은 1을 */
+	  timer_init(timer, &task->fifo, 1); /* 다음은 1을 */
 	  cursor_c = COL8_000000;
 	}
 	timer_settime(timer, 50);
-	boxfill8(sheet->buf, sheet->bxsize, cursor_c, cursor_x, 28, cursor_x + 7, 43);
-	sheet_refresh(sheet, cursor_x, 28, cursor_x + 8, 44);
       }
+      if (256 <= i && i <= 511) { /* 키보드 데이터(태스크A경유) */
+	if (i == 8 + 256) {
+	  /* 백스페이스 */
+	  if (cursor_x > 16) {
+	    /* 커서를 스페이스로 지우고 나서, 커서를 하나 앞으로 이동 */
+	    putfonts8_asc_sht(sheet, cursor_x, 28, COL8_FFFFFF, COL8_000000, " ", 1);
+	    cursor_x -= 8;
+	  }
+	} else {
+	  /* 일반문자 */
+	  if (cursor_x < 240) {
+	    /* 한 글자 표시하고 나서, 커서를 하나 뒤로 이동 */
+	    s[0] = i - 256;
+	    s[1] = 0;
+	    putfonts8_asc_sht(sheet, cursor_x, 28, COL8_FFFFFF, COL8_000000, s, 1);
+	    cursor_x += 8;
+	  }
+	}
+      }
+      /* 커서 재표시 */
+      boxfill8(sheet->buf, sheet->bxsize, cursor_c, cursor_x, 28, cursor_x + 7, 43);
+      sheet_refresh(sheet, cursor_x, 28, cursor_x + 8, 44);
     }
   }
 }

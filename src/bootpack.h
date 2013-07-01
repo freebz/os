@@ -237,6 +237,7 @@ struct TSS32 {
 struct TASK {
   int sel, flags; /* sel은 GDT의 번호 */
   int level, priority;
+  struct FIFO32 fifo;
   struct TSS32 tss;
 };
 
