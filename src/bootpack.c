@@ -17,7 +17,7 @@ void HariMain(void)
   char s[40];
   int fifobuf[128];
 
-  int mx, my, i, cursor_x, cursor_c, key_to = 0;
+  int mx, my, i, cursor_x, cursor_c, key_to = 0, key_shift = 0;
   unsigned int memtotal;
   struct MOUSE_DEC mdec;
   struct MEMMAN *memman = (struct MEMMAN *) MEMMAN_ADDR;
@@ -28,15 +28,27 @@ void HariMain(void)
   struct TASK *task_a, *task_cons;
   struct TIMER *timer;
 
-  static char keytable[0x54] = {
+  static char keytable0[0x80] = {
     0,   0,   '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 0,   0,
     'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '[', ']',   0,   0,   'A', 'S',
     'D', 'F', 'G', 'H', 'J', 'K', 'L', ';', '\'', '`',   0,   '\\', 'Z', 'X', 'C', 'V',
     'B', 'N', 'M', ',', '.', '/', 0,   '*', 0,   ' ', 0,   0,   0,   0,   0,   0,
     0,   0,   0,   0,   0,   0,   0,   '7', '8', '9', '-', '4', '5', '6', '+', '1',
-    '2', '3', '0', '.'
+    '2', '3', '0', '.', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   };
 
+  static char keytable1[0x80] = {
+    0,   0,   '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', 0,   0,
+    'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '[', ']',   0,   0,   'A', 'S',
+    'D', 'F', 'G', 'H', 'J', 'K', 'L', ':', '"', '~',   0,   '\\', 'Z', 'X', 'C', 'V',
+    'B', 'N', 'M', '<', '>', '?', 0,   '*', 0,   ' ', 0,   0,   0,   0,   0,   0,
+    0,   0,   0,   0,   0,   0,   0,   '7', '8', '9', '-', '4', '5', '6', '+', '1',
+    '2', '3', '0', '.', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  };
 
   init_gdtidt();
   init_pic();
@@ -131,17 +143,25 @@ void HariMain(void)
       if (256 <= i && i <= 511) { /* 키보드 데이터 */
 	sprintf(s, "%02X", i - 256);
 	putfonts8_asc_sht(sht_back, 0, 16, COL8_FFFFFF, COL8_008484, s, 2);
-	if (i < 0x54 + 256 && keytable[i - 256] != 0) { /* 통상 문자 */
+	if (i < 0x80 + 256) { /* 키 코드를 문자 코드로 변환 */
+	  if (key_shift == 0) {
+	    s[0] = keytable0[i - 256];
+	  } else {
+	    s[0] = keytable1[i - 256];
+	  }
+	} else {
+	  s[0] = 0;
+	}
+	if (s[0] != 0) { /* 통상 문자 */
 	  if (key_to == 0) { /* 태스크A에 */
 	    if (cursor_x < 128) {
 	      /* 한 글자 표시한 후 커서를 1개 진행 */
-	      s[0] = keytable[i - 256];
 	      s[1] = 0;
 	      putfonts8_asc_sht(sht_win, cursor_x, 28, COL8_000000, COL8_FFFFFF, s, 1);
 	      cursor_x += 8;
 	    }
 	  } else { /* 콘솔에 */
-	    fifo32_put(&task_cons->fifo, keytable[i-256] + 256);
+	    fifo32_put(&task_cons->fifo, s[0] + 256);
 	  }
 	}
 	if (i == 256 + 0x0e && cursor_x > 8) { /* 백 스페이스 */
@@ -167,6 +187,18 @@ void HariMain(void)
 	  }
 	  sheet_refresh(sht_win,  0, 0, sht_win->bxsize,  21);
 	  sheet_refresh(sht_cons, 0, 0, sht_cons->bxsize, 21);
+	}
+	if (i == 256 + 0x2a) { /* 왼쪽 Shift ON */
+	  key_shift |= 1;
+	}
+	if (i == 256 + 0x36) { /* 오른쪽 Shift ON */
+	  key_shift |= 2;
+	}
+	if (i == 256 + 0xaa) { /* 왼쪽 Shift OFF */
+	  key_shift &= ~1;
+	}
+	if (i == 256 + 0xb6) { /* 오른쪽 Shift OFF */
+	  key_shift &= ~2;
 	}
 	/* 커서의 재표시 */
 	boxfill8(sht_win->buf, sht_win->bxsize, cursor_c, cursor_x, 28, cursor_x + 7, 43);
