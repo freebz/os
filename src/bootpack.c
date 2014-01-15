@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include "bootpack.h"
 
+#define KEYCMD_LED	0xed
+
 void make_window8(unsigned char *buf, int xsize, int ysize, char *title, char act);
 void make_wtitle8(unsigned char *buf, int xsize, char *title, char act);
 void putfonts8_asc_sht(struct SHEET *sht, int x, int y, int c, int b, 
@@ -13,9 +15,9 @@ void console_task(struct SHEET *sheet);
 void HariMain(void)
 {
   struct BOOTINFO *binfo = (struct BOOTINFO *) ADR_BOOTINFO;
-  struct FIFO32 fifo;
+  struct FIFO32 fifo, keycmd;
   char s[40];
-  int fifobuf[128];
+  int fifobuf[128], keycmd_buf[32];
 
   int mx, my, i, cursor_x, cursor_c;
   unsigned int memtotal;
@@ -48,7 +50,8 @@ void HariMain(void)
     0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
     0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0
   };
-  int key_to = 0, key_shift = 0, key_leds = (binfo->leds >> 4) & 7;
+  int key_to = 0, key_shift = 0, key_leds = (binfo->leds >> 4) & 7,
+    keycmd_wait = 1;
 
   init_gdtidt();
   init_pic();
@@ -56,6 +59,7 @@ void HariMain(void)
   io_sti();	/* IDT/PIC의 초기화가 끝났으므로 CPU의 인터럽트 금지를 해제 */
   
   fifo32_init(&fifo, 128, fifobuf, 0);
+  fifo32_init(&keycmd, 32, keycmd_buf, 0);
   init_keyboard(&fifo, 256);
   enable_mouse(&fifo, 512, &mdec);
   io_out8(PIC0_IMR, 0xf8);	/* PIT, PIC1, 키보드를 허가 (11111000) */
@@ -132,7 +136,17 @@ void HariMain(void)
 	  memtotal / (1024 * 1024), memman_total(memman) / 1024);
   putfonts8_asc_sht(sht_back, 0, 32, COL8_FFFFFF, COL8_008484, s, 40);
 
+  /* 제일 먼저, 키보드 상태와 어긋나는 점이 없게 설정해 두기로 한다. */
+  fifo32_put(&keycmd, KEYCMD_LED);
+  fifo32_put(&keycmd, key_leds);
+
   for (;;) {
+    if (fifo32_status(&keycmd) > 0 && keycmd_wait < 0) {
+      /* 키보드 컨트롤러에 보낼 데이터가 있으면 보낸다. */
+      keycmd_wait = fifo32_get(&keycmd);
+      wait_KBC_sendready();
+      io_out8(PORT_KEYDAT, keycmd_wait);
+    }
     io_cli();
     if (fifo32_status(&fifo) == 0) {
       task_sleep(task_a);
@@ -205,6 +219,28 @@ void HariMain(void)
 	}
 	if (i == 256 + 0xb6) { /* 오른쪽 Shift OFF */
 	  key_shift &= ~2;
+	}
+	if (i == 256 + 0x3a) { /* CapsLock */
+	  key_leds ^= 4;
+	  fifo32_put(&keycmd, KEYCMD_LED);
+	  fifo32_put(&keycmd, key_leds);
+	}
+	if (i == 256 + 0x45) { /* NumLock */
+	  key_leds ^= 2;
+	  fifo32_put(&keycmd, KEYCMD_LED);
+	  fifo32_put(&keycmd, key_leds);
+	}
+	if (i == 256 + 0x46) { /* ScrollLock */
+	  key_leds ^= 1;
+	  fifo32_put(&keycmd, KEYCMD_LED);
+	  fifo32_put(&keycmd, key_leds);
+	}
+	if (i == 256 + 0xfa) { /* 키보드가 데이터를 무사히 받았다. */
+	  keycmd_wait = -1;
+	}
+	if (i == 256 + 0xfe) { /* 키보드가 데이터를 받을 수 없었다. */
+	  wait_KBC_sendready();
+	  io_out8(PORT_KEYDAT, keycmd_wait);
 	}
 	/* 커서의 재표시 */
 	boxfill8(sht_win->buf, sht_win->bxsize, cursor_c, cursor_x, 28, cursor_x + 7, 43);
