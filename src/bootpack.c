@@ -203,11 +203,13 @@ void HariMain(void)
 	    cursor_c = -1;	/* 커서를 지운다. */
 	    boxfill8(sht_win->buf, sht_win->bxsize, COL8_FFFFFF,
 		     cursor_x, 28, cursor_x + 7, 43);
+	    fifo32_put(&task_cons->fifo, 2);	/* 콘솔의 커서 ON */
 	  } else {
 	    key_to = 0;
 	    make_wtitle8(buf_win,  sht_win->bxsize,  "task_a",  1);
 	    make_wtitle8(buf_cons, sht_cons->bxsize, "console", 0);
 	    cursor_c = COL8_000000;	/* 커서를 표시한다. */
+	    fifo32_put(&task_cons->fifo, 3);	/* 콘솔의 커서 OFF */
 	  }
 	  sheet_refresh(sht_win,  0, 0, sht_win->bxsize,  21);
 	  sheet_refresh(sht_cons, 0, 0, sht_cons->bxsize, 21);
@@ -307,7 +309,9 @@ void HariMain(void)
 	  }
 	}
 	timer_settime(timer, 50);
-	boxfill8(sht_win->buf, sht_win->bxsize, cursor_c, cursor_x, 28, cursor_x + 7, 43);
+	if (cursor_c >= 0) {
+	  boxfill8(sht_win->buf, sht_win->bxsize, cursor_c, cursor_x, 28, cursor_x + 7, 43);
+	}
 	sheet_refresh(sht_win, cursor_x, 28, cursor_x + 8, 44);
       }
     }
@@ -403,7 +407,7 @@ void console_task(struct SHEET *sheet)
 {
   struct TIMER *timer;
   struct TASK *task = task_now();
-  int i, fifobuf[128], cursor_x = 16, cursor_c = COL8_000000;
+  int i, fifobuf[128], cursor_x = 16, cursor_c = -1;
   char s[2];
 
   fifo32_init(&task->fifo, 128, fifobuf, task);
@@ -425,12 +429,24 @@ void console_task(struct SHEET *sheet)
       if (i <= 1) { /* 커서용 타이머 */
 	if (i != 0) {
 	  timer_init(timer, &task->fifo, 0); /* 다음은 0을 */
-	  cursor_c = COL8_FFFFFF;
+	  if (cursor_c >= 0) {
+	    cursor_c = COL8_FFFFFF;
+	  }
 	} else {
 	  timer_init(timer, &task->fifo, 1); /* 다음은 1을 */
-	  cursor_c = COL8_000000;
+	  if (cursor_c >= 0) {
+	    cursor_c = COL8_000000;
+	  }
 	}
 	timer_settime(timer, 50);
+      }
+      if (i == 2) { /* 커서 ON */
+	cursor_c = COL8_FFFFFF;
+      }
+      if (i == 3) { /* 커서 OFF */
+	boxfill8(sheet->buf, sheet->bxsize, COL8_000000, cursor_x,
+		 28, cursor_x + 7, 43);
+	cursor_c = -1;
       }
       if (256 <= i && i <= 511) { /* 키보드 데이터(태스크A경유) */
 	if (i == 8 + 256) {
@@ -452,7 +468,9 @@ void console_task(struct SHEET *sheet)
 	}
       }
       /* 커서 재표시 */
-      boxfill8(sheet->buf, sheet->bxsize, cursor_c, cursor_x, 28, cursor_x + 7, 43);
+      if (cursor_c >= 0) {
+	boxfill8(sheet->buf, sheet->bxsize, cursor_c, cursor_x, 28, cursor_x + 7, 43);
+      }
       sheet_refresh(sheet, cursor_x, 28, cursor_x + 8, 44);
     }
   }
