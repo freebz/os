@@ -10,7 +10,8 @@ void make_wtitle8(unsigned char *buf, int xsize, char *title, char act);
 void putfonts8_asc_sht(struct SHEET *sht, int x, int y, int c, int b, 
 		       char *s, int l);
 void make_textbox8(struct SHEET *sht, int x0, int y0, int xs, int sy, int c);
-void console_task(struct SHEET *sheet);
+void console_task(struct SHEET *sheet, int memtotal);
+int cons_newline(int cursor_y, struct SHEET *sheet);
 
 void HariMain(void)
 {
@@ -91,7 +92,7 @@ void HariMain(void)
   make_window8(buf_cons, 256, 165, "console", 0);
   make_textbox8(sht_cons, 8, 28, 240, 128, COL8_000000);
   task_cons = task_alloc();
-  task_cons->tss.esp = memman_alloc_4k(memman, 64 * 1024) + 64 * 1024 - 8;
+  task_cons->tss.esp = memman_alloc_4k(memman, 64 * 1024) + 64 * 1024 - 12;
   task_cons->tss.eip = (int) &console_task;
   task_cons->tss.es = 1 * 8;
   task_cons->tss.cs = 2 * 8;
@@ -100,6 +101,7 @@ void HariMain(void)
   task_cons->tss.fs = 1 * 8;
   task_cons->tss.gs = 1 * 8;
   *((int *) (task_cons->tss.esp + 4)) = (int) sht_cons;
+  *((int *) (task_cons->tss.esp + 8)) = memtotal;
   task_run(task_cons, 2, 2); /* level=2, priority=2 */
 
   /* sht_win */
@@ -130,12 +132,6 @@ void HariMain(void)
   sheet_updown(sht_win,   2);
   sheet_updown(sht_mouse, 3);
 
-  sprintf(s, "(%d, %d)", mx, my);
-  putfonts8_asc_sht(sht_back, 0, 0, COL8_FFFFFF, COL8_008484, s, 10);
-  sprintf(s, "memory %dMB    free : %dKB",
-	  memtotal / (1024 * 1024), memman_total(memman) / 1024);
-  putfonts8_asc_sht(sht_back, 0, 32, COL8_FFFFFF, COL8_008484, s, 40);
-
   /* 제일 먼저, 키보드 상태와 어긋나는 점이 없게 설정해 두기로 한다. */
   fifo32_put(&keycmd, KEYCMD_LED);
   fifo32_put(&keycmd, key_leds);
@@ -155,8 +151,6 @@ void HariMain(void)
       i = fifo32_get(&fifo);
       io_sti();
       if (256 <= i && i <= 511) { /* 키보드 데이터 */
-	sprintf(s, "%02X", i - 256);
-	putfonts8_asc_sht(sht_back, 0, 16, COL8_FFFFFF, COL8_008484, s, 2);
 	if (i < 0x80 + 256) { /* 키 코드를 문자 코드로 변환 */
 	  if (key_shift == 0) {
 	    s[0] = keytable0[i - 256];
@@ -260,19 +254,6 @@ void HariMain(void)
 	sheet_refresh(sht_win, cursor_x, 28, cursor_x + 8, 44);
       } else if (512 <= i && i <= 767) { /* 마우스 데이터 */
 	if (mouse_decode(&mdec, i - 512) != 0) {
-	  /* 데이터가 3바이트 쌓였으므로 표시 */
-	  sprintf(s, "[lcr %4d %4d]", mdec.x, mdec.y);
-	  if ((mdec.btn & 0x01) != 0) {
-	    s[1] = 'L';
-	  }
-	  if ((mdec.btn & 0x02) != 0) {
-	    s[3] = 'R';
-	  }
-	  if ((mdec.btn & 0x04) != 0) {
-	    s[2] = 'C';
-	  }
-	  putfonts8_asc_sht(sht_back, 32, 16, COL8_FFFFFF, COL8_008484, s, 15);
-
 	  /* 마우스 커서의 이동 */
 	  mx += mdec.x;
 	  my += mdec.y;
@@ -288,8 +269,6 @@ void HariMain(void)
 	  if (my > binfo->scrny - 1) {
 	    my = binfo->scrny - 1;
 	  }
-	  sprintf(s, "(%3d, %3d)", mx, my);
-	  boxfill8(buf_back, binfo->scrnx, COL8_008484, 0, 0, 79, 15);
 	  /* 좌표 없앰 */
 	  putfonts8_asc(buf_back, binfo->scrnx, 0, 0, COL8_FFFFFF, s);
 	  /* 좌표 쓰기 */
@@ -408,13 +387,14 @@ void make_textbox8(struct SHEET *sht, int x0, int y0, int sx, int sy, int c)
   return;
 }
 
-void console_task(struct SHEET *sheet)
+void console_task(struct SHEET *sheet, int memtotal)
 {
   struct TIMER *timer;
   struct TASK *task = task_now();
   int i, fifobuf[128], cursor_x = 16, cursor_y = 28, cursor_c = -1;
-  char s[2];
-  int x, y;
+  char s[30], cmdline[30];
+
+  struct MEMMAN *memman = (struct MEMMAN *) MEMMAN_ADDR;
 
   fifo32_init(&task->fifo, 128, fifobuf, task);
   timer = timer_alloc();
@@ -467,22 +447,27 @@ void console_task(struct SHEET *sheet)
 	  /* 커서를 스페이스로 지운다. */
 	  putfonts8_asc_sht(sheet, cursor_x, cursor_y,
 			    COL8_FFFFFF, COL8_000000, " ", 1);
-	  if (cursor_y < 28 + 112) {
-	    cursor_y += 16;	/* 다음 행에 */
-	  } else {
-	    /* 스크롤 */
-	    for (y = 28; y < 28 + 112; y++) {
-	      for (x = 8; x < 8 + 240; x++) {
-		sheet->buf[x + y * sheet->bxsize] =
-		  sheet->buf[x + (y + 16) * sheet->bxsize];
-	      }
-	    }
-	    for (y = 28 + 112; y < 28 + 128; y++) {
-	      for (x = 8; x < 8 + 240; x++) {
-		sheet->buf[x + y * sheet->bxsize] = COL8_000000;
-	      }
-	    }
-	    sheet_refresh(sheet, 8, 28, 8 + 240, 28 + 128);
+	  cmdline[cursor_x / 8 - 2] = 0;
+	  cursor_y = cons_newline(cursor_y, sheet);
+	  /* 커맨드 실행 */
+	  if (cmdline[0] == 'm' && cmdline[1] == 'e' && cmdline[2] == 'm'
+	      && cmdline[3] == 0) {
+	    /* mem 커맨드 */
+	    sprintf(s, "total   %dMB", memtotal / (1024 * 1024));
+	    putfonts8_asc_sht(sheet, 8, cursor_y, COL8_FFFFFF,
+			      COL8_000000, s, 30);
+	    cursor_y = cons_newline(cursor_y, sheet);
+	    sprintf(s, "free %dKB", memman_total(memman) / 1024);
+	    putfonts8_asc_sht(sheet, 8, cursor_y, COL8_FFFFFF,
+			      COL8_000000, s, 30);
+	    cursor_y = cons_newline(cursor_y, sheet);
+	    cursor_y = cons_newline(cursor_y, sheet);
+	  } else if (cmdline[0] != 0) {
+	    /* 커맨드도 아니고, 그렇다고 빈 행도 아니다. */
+	    putfonts8_asc_sht(sheet, 8, cursor_y, COL8_FFFFFF,
+			      COL8_000000, "Bad command.", 12);
+	    cursor_y = cons_newline(cursor_y, sheet);
+	    cursor_y = cons_newline(cursor_y, sheet);
 	  }
 	  /* 프롬프트 표시 */
 	  putfonts8_asc_sht(sheet, 8, cursor_y, COL8_FFFFFF,
@@ -494,6 +479,7 @@ void console_task(struct SHEET *sheet)
 	    /* 한 글자 표시하고 나서, 커서를 하나 뒤로 이동 */
 	    s[0] = i - 256;
 	    s[1] = 0;
+	    cmdline[cursor_x / 8 - 2] = i - 256;
 	    putfonts8_asc_sht(sheet, cursor_x, cursor_y, COL8_FFFFFF, COL8_000000, s, 1);
 	    cursor_x += 8;
 	  }
@@ -507,4 +493,27 @@ void console_task(struct SHEET *sheet)
       sheet_refresh(sheet, cursor_x, cursor_y, cursor_x + 8, cursor_y + 16);
     }
   }
+}
+
+int cons_newline(int cursor_y, struct SHEET *sheet)
+{
+  int x, y;
+  if (cursor_y < 28 + 112) {
+    cursor_y += 16;	/* 다음의 행에 */
+  } else {
+    /* 스크롤 */
+    for (y = 28; y < 28 + 112; y++) {
+      for (x = 8; x < 8 + 240; x++) {
+	sheet->buf[x + y * sheet->bxsize] =
+	  sheet->buf[x + (y + 16) * sheet->bxsize];
+      }
+    }
+    for (y = 28 + 112; y < 28 + 128; y++) {
+      for (x = 8; x < 8 + 240; x++) {
+	sheet->buf[x + y * sheet->bxsize] = COL8_000000;
+      }
+    }
+    sheet_refresh(sheet, 8, 28, 8 + 240, 28 + 128);
+  }
+  return cursor_y;
 }
