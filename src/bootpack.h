@@ -276,9 +276,21 @@ void putfonts8_asc_sht(struct SHEET *sht, int x, int y, int c, int b,
 void make_textbox8(struct SHEET *sht, int x0, int y0, int xs, int sy, int c);
 
 /* console.c */
+struct CONSOLE {
+  struct SHEET *sht;
+  int cur_x, cur_y, cur_c;
+};
 void console_task(struct SHEET *sheet, int memtotal);
-int cons_newline(int cursor_y, struct SHEET *sheet);
+void cons_putchar(struct CONSOLE *cons, int chr, char move);
+void cons_newline(struct CONSOLE *cons);
+void cons_runcmd(char *cmdline, struct CONSOLE *cons, int *fat, int memtotal);
+void cmd_mem(struct CONSOLE *cons, int memtotal);
+void cmd_cls(struct CONSOLE *cons);
+void cmd_dir(struct CONSOLE *cons);
+void cmd_type(struct CONSOLE *cons, int *fat, char *cmdline);
+void cmd_hlt(struct CONSOLE *cons, int *fat);
 
 /* file.c */
 void file_readfat(int *fat, unsigned char *img);
 void file_loadfile(int clustno, int size, char *buf, int *fat, char *img);
+struct FILEINFO *file_search(char *name, struct FILEINFO *finfo, int max);
