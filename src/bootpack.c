@@ -393,6 +393,7 @@ void console_task(struct SHEET *sheet, int memtotal)
   struct TASK *task = task_now();
   int i, fifobuf[128], cursor_x = 16, cursor_y = 28, cursor_c = -1;
   char s[30], cmdline[30];
+  int x, y;
 
   struct MEMMAN *memman = (struct MEMMAN *) MEMMAN_ADDR;
 
@@ -450,8 +451,7 @@ void console_task(struct SHEET *sheet, int memtotal)
 	  cmdline[cursor_x / 8 - 2] = 0;
 	  cursor_y = cons_newline(cursor_y, sheet);
 	  /* 커맨드 실행 */
-	  if (cmdline[0] == 'm' && cmdline[1] == 'e' && cmdline[2] == 'm'
-	      && cmdline[3] == 0) {
+	  if (strcmp(cmdline, "mem") == 0) {
 	    /* mem 커맨드 */
 	    sprintf(s, "total   %dMB", memtotal / (1024 * 1024));
 	    putfonts8_asc_sht(sheet, 8, cursor_y, COL8_FFFFFF,
@@ -462,6 +462,15 @@ void console_task(struct SHEET *sheet, int memtotal)
 			      COL8_000000, s, 30);
 	    cursor_y = cons_newline(cursor_y, sheet);
 	    cursor_y = cons_newline(cursor_y, sheet);
+	  } else if (strcmp(cmdline, "cls") == 0) {
+	    /* cls 커맨드 */
+	    for (y = 28; y < 28 + 128; y++) {
+	      for (x = 8; x < 8 + 240; x++) {
+		sheet->buf[x + y * sheet->bxsize] = COL8_000000;
+	      }
+	    }
+	    sheet_refresh(sheet, 8, 28, 8 + 240, 28 + 128);
+	    cursor_y = 28;
 	  } else if (cmdline[0] != 0) {
 	    /* 커맨드도 아니고, 그렇다고 빈 행도 아니다. */
 	    putfonts8_asc_sht(sheet, 8, cursor_y, COL8_FFFFFF,
