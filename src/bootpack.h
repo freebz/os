@@ -7,7 +7,14 @@ struct BOOTINFO { /* 0x0ff0-0x0fff */
   short scrnx, scrny;	/* 화면 해상도 */
   char *vram;
 };
+struct FILEINFO {
+  unsigned char name[8], ext[3], type;
+  char reserve[10];
+  unsigned short time, date, clustno;
+  unsigned int size;
+};
 #define ADR_BOOTINFO 0x00000ff0
+#define ADR_DISKIMG  0x00100000
 
 /* naskfunc.nas */
 void io_hlt(void);
