@@ -184,7 +184,7 @@ void HariMain(void)
 	    fifo32_put(&task_cons->fifo, s[0] + 256);
 	  }
 	}
-	if (i == 256 + 0x0e && cursor_x > 8) { /* 백 스페이스 */
+	if (i == 256 + 0x0e) { /* 백 스페이스 */
 	  if (key_to == 0) { /* 태스크A에 */
 	    if (cursor_x > 8) {
 	      /* 커서를 스페이스로 지우고 나서 커서를 1개 back */
@@ -414,6 +414,7 @@ void console_task(struct SHEET *sheet)
   struct TASK *task = task_now();
   int i, fifobuf[128], cursor_x = 16, cursor_y = 28, cursor_c = -1;
   char s[2];
+  int x, y;
 
   fifo32_init(&task->fifo, 128, fifobuf, task);
   timer = timer_alloc();
@@ -450,7 +451,7 @@ void console_task(struct SHEET *sheet)
       }
       if (i == 3) { /* 커서 OFF */
 	boxfill8(sheet->buf, sheet->bxsize, COL8_000000, cursor_x,
-		 28, cursor_x + 7, 43);
+		 cursor_y, cursor_x + 7, cursor_y + 15);
 	cursor_c = -1;
       }
       if (256 <= i && i <= 511) { /* 키보드 데이터(태스크A경유) */
@@ -458,21 +459,35 @@ void console_task(struct SHEET *sheet)
 	  /* 백스페이스 */
 	  if (cursor_x > 16) {
 	    /* 커서를 스페이스로 지우고 나서, 커서를 하나 앞으로 이동 */
-	    putfonts8_asc_sht(sheet, cursor_x, 28, COL8_FFFFFF, COL8_000000, " ", 1);
+	    putfonts8_asc_sht(sheet, cursor_x, cursor_y, COL8_FFFFFF, COL8_000000, " ", 1);
 	    cursor_x -= 8;
 	  }
 	} else if (i == 10 + 256) {
 	  /* Enter */
+	  /* 커서를 스페이스로 지운다. */
+	  putfonts8_asc_sht(sheet, cursor_x, cursor_y,
+			    COL8_FFFFFF, COL8_000000, " ", 1);
 	  if (cursor_y < 28 + 112) {
-	    /* 커서를 스페이스로 지운다. */
-	    putfonts8_asc_sht(sheet, cursor_x, cursor_y,
-			      COL8_FFFFFF, COL8_000000, " ", 1);
-	    cursor_y += 16;
-	    /* 프롬프트 표시 */
-	    putfonts8_asc_sht(sheet, 8, cursor_y, COL8_FFFFFF,
-			      COL8_000000, ">", 1);
-	    cursor_x = 16;
+	    cursor_y += 16;	/* 다음 행에 */
+	  } else {
+	    /* 스크롤 */
+	    for (y = 28; y < 28 + 112; y++) {
+	      for (x = 8; x < 8 + 240; x++) {
+		sheet->buf[x + y * sheet->bxsize] =
+		  sheet->buf[x + (y + 16) * sheet->bxsize];
+	      }
+	    }
+	    for (y = 28 + 112; y < 28 + 128; y++) {
+	      for (x = 8; x < 8 + 240; x++) {
+		sheet->buf[x + y * sheet->bxsize] = COL8_000000;
+	      }
+	    }
+	    sheet_refresh(sheet, 8, 28, 8 + 240, 28 + 128);
 	  }
+	  /* 프롬프트 표시 */
+	  putfonts8_asc_sht(sheet, 8, cursor_y, COL8_FFFFFF,
+			    COL8_000000, ">", 1);
+	  cursor_x = 16;
 	} else {
 	  /* 일반문자 */
 	  if (cursor_x < 240) {
