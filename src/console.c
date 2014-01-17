@@ -164,14 +164,14 @@ void cons_runcmd(char *cmdline, struct CONSOLE *cons, int *fat, int memtotal)
     cmd_dir(cons);
   } else if (strncmp(cmdline, "type ", 5) == 0) {
     cmd_type(cons, fat, cmdline);
-  } else if (strcmp(cmdline, "hlt") == 0) {
-    cmd_hlt(cons, fat);
   } else if (cmdline[0] != 0) {
-    /* 커맨드도 아니고, 그렇다고 빈 행도 아니다. */
-    putfonts8_asc_sht(cons->sht, 8, cons->cur_y, COL8_FFFFFF,
-		      COL8_000000, "Bad command.", 12);
-    cons_newline(cons);
-    cons_newline(cons);
+    if (cmd_app(cons, fat, cmdline) == 0) {
+      /* 커맨드도 아니고, 애플리케이션도 아니고, 그렇다고 빈 행도 아니다. */
+      putfonts8_asc_sht(cons->sht, 8, cons->cur_y, COL8_FFFFFF,
+			COL8_000000, "Bad command.", 12);
+      cons_newline(cons);
+      cons_newline(cons);
+    }
   }
   return;
 }
@@ -259,13 +259,34 @@ void cmd_type(struct CONSOLE *cons, int *fat, char *cmdline)
   return;
 }
 
-void cmd_hlt(struct CONSOLE *cons, int *fat)
+int cmd_app(struct CONSOLE *cons, int *fat, char *cmdline)
 {
   struct MEMMAN *memman = (struct MEMMAN *) MEMMAN_ADDR;
   struct FILEINFO *finfo = file_search("HLT.HRB",
 				       (struct FILEINFO *) (ADR_DISKIMG + 0x002600), 224);
   struct SEGMENT_DESCRIPTOR *gdt = (struct SEGMENT_DESCRIPTOR *) ADR_GDT;  
-  char *p;
+  char name[18], *p;
+  int i;
+  /* 커맨드 라인으로부터 파일명을 생성 */
+  for (i = 0; i < 13; i++) {
+    if (cmdline[i] <= ' ') {
+      break;
+    }
+    name[i] = cmdline[i];
+  }
+
+  /* 파일을 찾는다. */
+  finfo = file_search(name, (struct FILEINFO *) (ADR_DISKIMG + 0x002600), 224);
+  if (finfo == 0 && name[i -1] != '.') {
+    /* 발견되지 않았기 때문에 뒤에 ".HRB"를 붙여 한 번 더 찾아본다. */
+    name[i    ] = '.';
+    name[i + 1] = 'H';
+    name[i + 2] = 'R';
+    name[i + 3] = 'B';
+    name[i + 4] = 0;
+    finfo = file_search(name, (struct FILEINFO *) (ADR_DISKIMG + 0x002600), 224);
+  }
+  
   if (finfo != 0) {
     /* 파일이 발견되었을 경우 */
     p = (char *) memman_alloc_4k(memman, finfo->size);

@@ -290,7 +290,7 @@ void cmd_mem(struct CONSOLE *cons, int memtotal);
 void cmd_cls(struct CONSOLE *cons);
 void cmd_dir(struct CONSOLE *cons);
 void cmd_type(struct CONSOLE *cons, int *fat, char *cmdline);
-void cmd_hlt(struct CONSOLE *cons, int *fat);
+int cmd_app(struct CONSOLE *cons, int *fat, char *cmdline);
 
 /* file.c */
 void file_readfat(int *fat, unsigned char *img);
