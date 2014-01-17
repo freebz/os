@@ -19,10 +19,10 @@
       GLOBAL	  _asm_inthandler2c
       GLOBAL	  _memtest_sub
       GLOBAL	  _farjmp, _farcall
-      GLOBAL	  _asm_cons_putchar
+      GLOBAL	  _asm_hrb_api
       EXTERN	  _inthandler20, _inthandler21
       EXTERN	  _inthandler2c
-      EXTERN	  _cons_putchar
+      EXTERN	  _hrb_api
 
 
 ; 이하는 실제의 함수
@@ -206,14 +206,11 @@ _farcall:	; void farcall(int eip, int cs);
 	CALL	FAR [ESP+4]	   ; eip, cs
 	RET
 
-_asm_cons_putchar:
+_asm_hrb_api:
 	STI
-	PUSHAD
-	PUSH	1
-	AND	EAX, 0xff	; AH나 EAX의 상위를 0으로 하고, EAX에 문자 코드를 넣는다.
-	PUSH	EAX
-	PUSH	DWORD [0x0fec]	; 메모리의 내용을 읽어내어 그 값을 PUSH한다.
-	CALL	_cons_putchar
-	ADD	ESP, 12		; 스택에 저장된 데이터를 버린다.
+	PUSHAD			; 보존을 위한 PUSH
+	PUSHAD			; hrb_api에 건네주기 위한 PUSH
+	CALL	_hrb_api
+	ADD	ESP, 32		; 스택에 저장된 데이터를 버린다.
 	POPAD
 	IRETD

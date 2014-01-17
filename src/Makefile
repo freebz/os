@@ -57,6 +57,7 @@ haribote.img : ipl.bin haribote.sys Makefile
 		copy from:ipl.nas to:@: \
 		copy from:make.bat to:@: \
 		copy from:hello.hrb to:@: \
+		copy from:hello2.hrb to:@: \
 		imgout:haribote.img
 
 # 일반 규칙
