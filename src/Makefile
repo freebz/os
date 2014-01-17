@@ -50,7 +50,7 @@ bootpack.hrb : bootpack.bim Makefile
 haribote.sys : asmhead.bin bootpack.hrb Makefile
 	copy /B asmhead.bin+bootpack.hrb haribote.sys
 
-haribote.img : ipl.bin haribote.sys Makefile
+haribote.img : ipl.bin haribote.sys a.hrb hello3.hrb Makefile
 	$(EDIMG) imgin:../z_tools/fdimg0at.tek \
 		wbinimg src:ipl.bin len:512 from:0 to:0 \
 		copy from:haribote.sys to:@: \
@@ -58,7 +58,22 @@ haribote.img : ipl.bin haribote.sys Makefile
 		copy from:make.bat to:@: \
 		copy from:hello.hrb to:@: \
 		copy from:hello2.hrb to:@: \
+		copy from:a.hrb to:@: \
+		copy from:hello3.hrb to:@: \
 		imgout:haribote.img
+
+a.bim : a.obj a_nask.obj Makefile
+	$(OBJ2BIM) @$(RULEFILE) out:a.bim map:a.map a.obj a_nask.obj
+
+a.hrb : a.bim Makefile
+	$(BIM2HRB) a.bim a.hrb 0
+
+hello3.bim : hello3.obj a_nask.obj Makefile
+	$(OBJ2BIM) @$(RULEFILE) out:hello3.bim map:hello3.map hello3.obj a_nask.obj
+
+hello3.hrb : hello3.bim Makefile
+	$(BIM2HRB) hello3.bim hello3.hrb 0
+
 
 # 일반 규칙
 
@@ -93,6 +108,12 @@ clean:
 	-$(DEL) bootpack.bim
 	-$(DEL) bootpack.hrb
 	-$(DEL) haribote.sys
+	-$(DEL) a.map
+	-$(DEL) a.bim
+	-$(DEL) a.hrb
+	-$(DEL) hello3.map
+	-$(DEL) hello3.bim
+	-$(DEL) hello3.hrb
 
 src_only:
 	$(MAKE) clean
