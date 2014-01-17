@@ -275,19 +275,17 @@ int cmd_app(struct CONSOLE *cons, int *fat, char *cmdline)
   if (finfo != 0) {
     /* 파일이 발견되었을 경우 */
     p = (char *) memman_alloc_4k(memman, finfo->size);
+    *((int *) 0xfe8) = (int) p;
     file_loadfile(finfo->clustno, finfo->size, p,
 		  fat, (char *)(ADR_DISKIMG + 0x003e00));
     set_segmdesc(gdt + 1003, finfo->size - 1, (int) p, AR_CODE32_ER);
     farcall(0, 1003 * 8);
     memman_free_4k(memman, (int) p, finfo->size);
-  } else {
-    /* 파일이 발견되지 않았을 경우 */
-    putfonts8_asc_sht(cons->sht, 8, cons->cur_y, COL8_FFFFFF,
-		      COL8_000000, "File not found.", 15);
     cons_newline(cons);
+    return 1;
   }
-  cons_newline(cons);
-  return;
+  /* 파일이 발견되지 않았을 경우 */
+  return 0;
 }
 
 void cons_putstr0(struct CONSOLE *cons, char *s)
@@ -310,13 +308,14 @@ void cons_putstr1(struct CONSOLE *cons, char *s, int l)
 void hrb_api(int edi, int esi, int ebp, int esp, int ebx, int edx,
 	     int ecx, int eax)
 {
+  int cs_base = *((int *) 0xfe8);
   struct CONSOLE *cons = (struct CONSOLE *) *((int *) 0x0fec);
   if (edx == 1) {
     cons_putchar(cons, eax & 0xff, 1);
   } else if (edx == 2) {
-    cons_putstr0(cons, (char *) ebx);
+    cons_putstr0(cons, (char *) ebx + cs_base);
   } else if (edx == 3) {
-    cons_putstr1(cons, (char *) ebx, ecx);
+    cons_putstr1(cons, (char *) ebx + cs_base, ecx);
   }
   return;
 }
