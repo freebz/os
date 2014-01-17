@@ -207,10 +207,11 @@ _farcall:	; void farcall(int eip, int cs);
 	RET
 
 _asm_cons_putchar:
+	STI
 	PUSH	1
 	AND	EAX, 0xff	; AH나 EAX의 상위를 0으로 하고, EAX에 문자 코드를 넣는다.
 	PUSH	EAX
 	PUSH	DWORD [0x0fec]	; 메모리의 내용을 읽어내어 그 값을 PUSH한다.
 	CALL	_cons_putchar
 	ADD	ESP, 12		; 스택에 저장된 데이터를 버린다.
-	RETF
+	IRETD

@@ -34,6 +34,8 @@ void store_cr0(int cr0);
 unsigned int memtest_sub(unsigned int start, unsigned int end);
 void asm_inthandler20(void);
 void farjmp(int eip, int cs);
+void farcall(int eip, int cs);
+void asm_cons_putchar(void);
 
 /* graphic.c */
 void init_palette(void);
