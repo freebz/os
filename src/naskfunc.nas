@@ -13,13 +13,17 @@
       GLOBAL	  _io_out8, _io_out16, _io_out32
       GLOBAL	  _io_load_eflags, _io_store_eflags
       GLOBAL	  _load_gdtr, _load_idtr
-      GLOBAL	  _asm_inthandler21, _asm_inthandler2c
-      EXTERN	  _inthandler21, _inthandler2c
       GLOBAL	  _load_cr0, _store_cr0
+      GLOBAL	  _load_tr
+      GLOBAL	  _asm_inthandler20, _asm_inthandler21
+      GLOBAL	  _asm_inthandler2c
       GLOBAL	  _memtest_sub
-      GLOBAL	  _asm_inthandler20
-      EXTERN	  _inthandler20
-      GLOBAL	  _load_tr, _farjmp
+      GLOBAL	  _farjmp
+      GLOBAL	  _asm_cons_putchar
+      EXTERN	  _inthandler20, _inthandler21
+      EXTERN	  _inthandler2c
+      EXTERN	  _cons_putchar
+
 
 ; 이하는 실제의 함수
 
@@ -197,3 +201,12 @@ _load_tr:	; void load_tr(int tr);
 _farjmp:	; void farjmp(int eip, int cs);
 	JMP	FAR [ESP+4]	  ; eip, cs
 	RET
+
+_asm_cons_putchar:
+	PUSH	1
+	AND	EAX, 0xff	; AH나 EAX의 상위를 0으로 하고, EAX에 문자 코드를 넣는다.
+	PUSH	EAX
+	PUSH	DWORD [0x0fec]	; 메모리의 내용을 읽어내어 그 값을 PUSH한다.
+	CALL	_cons_putchar
+	ADD	ESP, 12		; 스택에 저장된 데이터를 버린다.
+	RETF
