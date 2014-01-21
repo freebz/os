@@ -14,12 +14,12 @@
 		GLOBAL	_load_cr0, _store_cr0
 		GLOBAL	_load_tr
 		GLOBAL	_asm_inthandler20, _asm_inthandler21
-		GLOBAL	_asm_inthandler2c
+		GLOBAL	_asm_inthandler2c, _asm_inthandler0d
 		GLOBAL	_memtest_sub
 		GLOBAL	_farjmp, _farcall
 		GLOBAL	_asm_hrb_api, _start_app
 		EXTERN	_inthandler20, _inthandler21
-		EXTERN	_inthandler2c
+		EXTERN	_inthandler2c, _inthandler0d
 		EXTERN	_hrb_api
 
 [SECTION .text]
@@ -234,6 +234,67 @@ _asm_inthandler2c:
 		POP		DS
 		POP		ES
 		IRETD
+
+_asm_inthandler0d:
+		STI
+		PUSH		ES
+		PUSH		DS
+		PUSHAD
+		MOV		AX, SS
+		CMP		AX, 1*8
+		JNE		.from_app
+; OS가 움직이고 있을 때 인터럽트되었으므로 거의 지금과 동일
+       		MOV  		EAX, ESP
+		PUSH		SS
+		PUSH		EAX
+		MOV		AX, SS
+		MOV		DS, AX
+		MOV		ES, AX
+		CALL		_inthandler0d
+		ADD		ESP, 8
+		POPAD
+		POP		DS
+		POP		ES
+		ADD		ESP, 4
+		IRETD
+.from_app:
+; 애플리케이션이 움직이고 있을 때 인터럽트되었다.
+  		CLI
+		MOV		EAX, 1*8
+		MOV		DS, AX
+		MOV		ECX, [0xfe4]
+		MOV		ECX, -8
+		MOV		[ECX+4], SS
+		MOV		[ECX  ], ESP
+		MOV		SS, AX
+		MOV		ES, AX
+		MOV		ESP, ECX
+		STI
+		CALL		_inthandler0d
+		CLI
+		CMP		EAX, 0
+		JNE		.kill
+		POP		ECX
+		POP		EAX
+		MOV		SS, AX
+		MOV		ESP, ECX
+		POPAD
+		POP		DS
+		POP		ES
+		ADD		ESP, 4
+		IRETD
+.kill:
+; 애플리케이션을 이상종료(ABEND)시키기로 했다.
+  		MOV		EAX, 1*8
+		MOV		ES, AX
+		MOV		SS, AX
+		MOV		DS, AX
+		MOV		FS, AX
+		MOV		GS, AX
+		MOV		ESP, [0xfe4]
+		STI
+		POPAD
+		RET
 
 _memtest_sub:	; unsigned int memtest_sub(unsigned int start, unsigned int end)
 		PUSH	EDI						; (EBX, ESI, EDI 도 사용하고 싶기 때문에)
