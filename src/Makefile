@@ -61,6 +61,7 @@ haribote.img : ipl.bin haribote.sys a.hrb hello3.hrb crack1.hrb Makefile
 		copy from:a.hrb to:@: \
 		copy from:hello3.hrb to:@: \
 		copy from:crack1.hrb to:@: \
+		copy from:crack2.hrb to:@: \
 		imgout:haribote.img
 
 a.bim : a.obj a_nask.obj Makefile
