@@ -30,6 +30,7 @@ void load_idtr(int limit, int addr);
 void asm_inthandler21(void);
 void asm_inthandler2c(void);
 void asm_inthandler0d(void);
+void asm_inthandler0c(void);
 int load_cr0(void);
 void store_cr0(int cr0);
 unsigned int memtest_sub(unsigned int start, unsigned int end);
@@ -297,6 +298,7 @@ void cons_putstr1(struct CONSOLE *cons, char *s, int l);
 int *hrb_api(int edi, int esi, int ebp, int esp, int ebx, int edx,
 	     int ecx, int eax);
 int inthandler0d(int *esp);
+int inthandler0c(int *esp);
 
 /* file.c */
 void file_readfat(int *fat, unsigned char *img);
