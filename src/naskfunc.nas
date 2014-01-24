@@ -116,38 +116,13 @@ _asm_inthandler20:
 		PUSH	ES
 		PUSH	DS
 		PUSHAD
-		MOV		AX,SS
-		CMP		AX,1*8
-		JNE		.from_app
-;	OS가 움직이고 있을 때 인터럽트 되었으므로 거의 지금까지 대로
 		MOV		EAX,ESP
-		PUSH	SS				; 인터럽트 시 SS를 보존
 		PUSH	EAX				; 인터럽트 시 ESP를 보존
 		MOV		AX,SS
 		MOV		DS,AX
 		MOV		ES,AX
 		CALL	_inthandler20
-		ADD		ESP,8
-		POPAD
-		POP		DS
-		POP		ES
-		IRETD
-.from_app:
-;	어플리케이션이 움직이고 있을 때 인터럽트되었다
-		MOV		EAX,1*8
-		MOV		DS, AX			; DS만 OS용으로 한다
-		MOV		ECX,[0xfe4]		; OS의 ESP
-		ADD		ECX,-8
-		MOV		[ECX+4], SS		; 인터럽트 시 SS를 보존
-		MOV		[ECX  ], ESP		; 인터럽트 시 ESP를 보존
-		MOV		SS,AX
-		MOV		ES,AX
-		MOV		ESP,ECX
-		CALL	_inthandler20
-		POP		ECX
 		POP		EAX
-		MOV		SS, AX			; SS를 어플리케이션용으로 되돌린다
-		MOV		ESP, ECX		; ESP도 어플리케이션용으로 되돌린다
 		POPAD
 		POP		DS
 		POP		ES
@@ -157,38 +132,13 @@ _asm_inthandler21:
 		PUSH	ES
 		PUSH	DS
 		PUSHAD
-		MOV		AX,SS
-		CMP		AX,1*8
-		JNE		.from_app
-;	OS가 움직이고 있을 때 인터럽트 되었으므로 거의 지금까지 대로
 		MOV		EAX,ESP
-		PUSH	SS				; 인터럽트 시 SS를 보존
 		PUSH	EAX				; 인터럽트 시 ESP를 보존
 		MOV		AX,SS
 		MOV		DS,AX
 		MOV		ES,AX
 		CALL	_inthandler21
-		ADD		ESP,8
-		POPAD
-		POP		DS
-		POP		ES
-		IRETD
-.from_app:
-;	어플리가 움직이고 있을 때 인터럽트 되었다
-		MOV		EAX,1*8
-		MOV		DS, AX			; DS만 OS용으로 한다
-		MOV		ECX,[0xfe4]		; OS의 ESP
-		ADD		ECX,-8
-		MOV		[ECX+4], SS		; 인터럽트 시 SS를 보존
-		MOV		[ECX  ], ESP		; 인터럽트 시 ESP를 보존
-		MOV		SS,AX
-		MOV		ES,AX
-		MOV		ESP,ECX
-		CALL	_inthandler21
-		POP		ECX
 		POP		EAX
-		MOV		SS, AX			; SS를 어플리케이션용으로 되돌린다
-		MOV		ESP, ECX		; ESP도 어플리케이션용으로 되돌린다
 		POPAD
 		POP		DS
 		POP		ES
@@ -198,38 +148,13 @@ _asm_inthandler2c:
 		PUSH	ES
 		PUSH	DS
 		PUSHAD
-		MOV		AX,SS
-		CMP		AX,1*8
-		JNE		.from_app
-;	OS가 움직이고 있을 때 인터럽트 되었으므로 거의 지금까지 대로
 		MOV		EAX,ESP
-		PUSH	SS				; 인터럽트 시 SS를 보존
 		PUSH	EAX				; 인터럽트 시 ESP를 보존
 		MOV		AX,SS
 		MOV		DS,AX
 		MOV		ES,AX
 		CALL	_inthandler2c
-		ADD		ESP,8
-		POPAD
-		POP		DS
-		POP		ES
-		IRETD
-.from_app:
-;	어플리가 움직이고 있을 때 인터럽트 되었다
-		MOV		EAX,1*8
-		MOV		DS, AX			; DS만 OS용으로 한다
-		MOV		ECX,[0xfe4]		; OS의 ESP
-		ADD		ECX,-8
-		MOV		[ECX+4], SS		; 인터럽트 시 SS를 보존
-		MOV		[ECX  ], ESP		; 인터럽트 시 ESP를 보존
-		MOV		SS,AX
-		MOV		ES,AX
-		MOV		ESP,ECX
-		CALL	_inthandler2c
-		POP		ECX
 		POP		EAX
-		MOV		SS, AX			; SS를 어플리케이션용으로 되돌린다
-		MOV		ESP, ECX		; ESP도 어플리케이션용으로 되돌린다
 		POPAD
 		POP		DS
 		POP		ES
@@ -240,61 +165,20 @@ _asm_inthandler0d:
 		PUSH		ES
 		PUSH		DS
 		PUSHAD
-		MOV		AX, SS
-		CMP		AX, 1*8
-		JNE		.from_app
-; OS가 움직이고 있을 때 인터럽트되었으므로 거의 지금과 동일
        		MOV  		EAX, ESP
-		PUSH		SS
 		PUSH		EAX
 		MOV		AX, SS
 		MOV		DS, AX
 		MOV		ES, AX
 		CALL		_inthandler0d
-		ADD		ESP, 8
-		POPAD
-		POP		DS
-		POP		ES
-		ADD		ESP, 4
-		IRETD
-.from_app:
-; 애플리케이션이 움직이고 있을 때 인터럽트되었다.
-  		CLI
-		MOV		EAX, 1*8
-		MOV		DS, AX
-		MOV		ECX, [0xfe4]
-		MOV		ECX, -8
-		MOV		[ECX+4], SS
-		MOV		[ECX  ], ESP
-		MOV		SS, AX
-		MOV		ES, AX
-		MOV		ESP, ECX
-		STI
-		CALL		_inthandler0d
-		CLI
 		CMP		EAX, 0
-		JNE		.kill
-		POP		ECX
+		JNE		end_app
 		POP		EAX
-		MOV		SS, AX
-		MOV		ESP, ECX
 		POPAD
 		POP		DS
 		POP		ES
 		ADD		ESP, 4
 		IRETD
-.kill:
-; 애플리케이션을 이상종료(ABEND)시키기로 했다.
-  		MOV		EAX, 1*8
-		MOV		ES, AX
-		MOV		SS, AX
-		MOV		DS, AX
-		MOV		FS, AX
-		MOV		GS, AX
-		MOV		ESP, [0xfe4]
-		STI
-		POPAD
-		RET
 
 _memtest_sub:	; unsigned int memtest_sub(unsigned int start, unsigned int end)
 		PUSH	EDI						; (EBX, ESI, EDI 도 사용하고 싶기 때문에)
@@ -338,81 +222,47 @@ _farcall:		; void farcall(int eip, int cs);
 		RET
 
 _asm_hrb_api:
-		; 처음부터 인터럽트 금지가 되어 있다
+		STI
 		PUSH	DS
 		PUSH	ES
 		PUSHAD		; 보존을 위한 PUSH
-		MOV		EAX,1*8
-		MOV		DS, AX			; DS만 OS용으로 한다
-		MOV		ECX,[0xfe4]		; OS의 ESP
-		ADD		ECX,-40
-		MOV		[ECX+32], ESP		; 어플리케이션의 ESP를 보존
-		MOV		[ECX+36], SS		; 어플리케이션의 SS를 보존
-
-; PUSHAD 한 값을 시스템의 스택에 카피한다
-		MOV		EDX,[ESP   ]
-		MOV		EBX,[ESP+ 4]
-		MOV		[ECX   ], EDX	; hrb_api에 건네주기 위해 카피
-		MOV		[ECX+ 4], EBX	; hrb_api에 건네주기 위해 카피
-		MOV		EDX,[ESP+ 8]
-		MOV		EBX,[ESP+12]
-		MOV		[ECX+ 8], EDX	; hrb_api에 건네주기 위해 카피
-		MOV		[ECX+12], EBX	; hrb_api에 건네주기 위해 카피
-		MOV		EDX,[ESP+16]
-		MOV		EBX,[ESP+20]
-		MOV		[ECX+16], EDX	; hrb_api에 건네주기 위해 카피
-		MOV		[ECX+20], EBX	; hrb_api에 건네주기 위해 카피
-		MOV		EDX,[ESP+24]
-		MOV		EBX,[ESP+28]
-		MOV		[ECX+24], EDX	; hrb_api에 건네주기 위해 카피
-		MOV		[ECX+28], EBX	; hrb_api에 건네주기 위해 카피
-
-		MOV		ES, AX		; 나머지 세그먼트(segment) 레지스터도 OS용으로 한다
-		MOV		SS,AX
-		MOV		ESP,ECX
-		STI			; 겨우 인터럽트 허가
-
-		CALL	_hrb_api
-
-		MOV		ECX,[ESP+32]	; 어플리케이션의 ESP
-		MOV		EAX,[ESP+36]	; 어플리케이션의 SS
-		CLI
-		MOV		SS,AX
-		MOV		ESP,ECX
+		PUSHAD		; hrb_api에 건네주기 위한 PUSH
+		MOV		AX, SS
+		MOV		DS, AX			; OS용의 세그먼트를 DS와 ES에도 세트
+		MOV		ES, AX
+		CALL		_hrb_api
+		CMP		EAX, 0			; EAX가 0이 아니면 애플리케이션 종료 처리
+		JNE		end_app
+		ADD		ESP, 32
 		POPAD
 		POP		ES
 		POP		DS
-		IRETD		; 이 명령이 자동으로 STI 해 준다
+		IRETD
+end_app:
+; EAX는 tss.esp0의 번지
+  		MOV		ESP, [EAX]
+		POPAD
+		RET					; cmd_app로 돌아간다.
 
-_start_app:		; void start_app(int eip, int cs, int esp, int ds);
+_start_app:		; void start_app(int eip, int cs, int esp, int ds, int *tss_esp0);
 		PUSHAD		; 32비트 레지스터를 전부 보존해 둔다
 		MOV		EAX,[ESP+36]	; 어플리케이션용의 EIP
 		MOV		ECX,[ESP+40]	; 어플리케이션용의 CS
 		MOV		EDX,[ESP+44]	; 어플리케이션용의 ESP
 		MOV		EBX,[ESP+48]	; 어플리케이션용의 DS/SS
-		MOV		[0xfe4], ESP		; OS용의 ESP
-		CLI			; 변환중에 인터럽트가 일어나기를 원하지 않기 때문에 금지
+		MOV		EBP,[ESP+52]	; tss.esp0의 번지
+		MOV		[EBP  ], ESP	; OS용의 ESP
+		MOV		[EBP+4], SS	; OS용의 SS를 보존
 		MOV		ES,BX
-		MOV		SS,BX
 		MOV		DS,BX
 		MOV		FS,BX
 		MOV		GS,BX
-		MOV		ESP,EDX
-		STI					; 변환 완료이므로 인터럽트 가능으로 되돌린다
-		PUSH	ECX				; far-CALL를 위해서 PUSH(cs)
-		PUSH	EAX				; far-CALL를 위해서 PUSH(eip)
-		CALL	FAR [ESP]			; 어플리케이션을 호출한다
-
-;	어플리케이션이 종료하는 곳으로 돌아온다
-
-		MOV		EAX,1*8			; OS용의 DS/SS
-		CLI					; 또 바꾸므로 인터럽트 금지
-		MOV		ES,AX
-		MOV		SS,AX
-		MOV		DS,AX
-		MOV		FS,AX
-		MOV		GS,AX
-		MOV		ESP,[0xfe4]
-		STI			; 변환 완료이므로 인터럽트 가능으로 되돌린다
-		POPAD			; 보존해 둔 레지스터를 회복
-		RET
+; 이하는RETF로 애플리케이션에 돌아가게 하기 위한 스택 조정
+  	        OR	      	ECX, 3
+		OR		EBX, 3
+		PUSH		EBX
+		PUSH		EDX
+		PUSH		ECX
+		PUSH		EAX
+		RETF
+; 애플리케이션이 종료해도 여기에는 오지 않는다.

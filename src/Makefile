@@ -50,7 +50,7 @@ bootpack.hrb : bootpack.bim Makefile
 haribote.sys : asmhead.bin bootpack.hrb Makefile
 	copy /B asmhead.bin+bootpack.hrb haribote.sys
 
-haribote.img : ipl.bin haribote.sys a.hrb hello3.hrb crack1.hrb Makefile
+haribote.img : ipl.bin haribote.sys a.hrb hello.hrb hello2.hrb hello3.hrb crack1.hrb crack2.hrb Makefile
 	$(EDIMG) imgin:../z_tools/fdimg0at.tek \
 		wbinimg src:ipl.bin len:512 from:0 to:0 \
 		copy from:haribote.sys to:@: \
@@ -70,17 +70,26 @@ a.bim : a.obj a_nask.obj Makefile
 a.hrb : a.bim Makefile
 	$(BIM2HRB) a.bim a.hrb 0
 
+hello.hrb : hello.nas Makefile
+	$(NASK) hello.nas hello.hrb hello.lst
+
+hello2.hrb : hello2.nas Makefile
+	$(NASK) hello2.nas hello2.hrb hello2.lst
+
 hello3.bim : hello3.obj a_nask.obj Makefile
 	$(OBJ2BIM) @$(RULEFILE) out:hello3.bim map:hello3.map hello3.obj a_nask.obj
 
 hello3.hrb : hello3.bim Makefile
 	$(BIM2HRB) hello3.bim hello3.hrb 0
 
-crack1.bim : crack1.obj Makefile
-	$(OBJ2BIM) @$(RULEFILE) out:crack1.bim map:crack1.map crack1.obj
+crack1.bim : crack1.obj a_nask.obj Makefile
+	$(OBJ2BIM) @$(RULEFILE) out:crack1.bim map:crack1.map crack1.obj a_nask.obj
 
 crack1.hrb : crack1.bim Makefile
 	$(BIM2HRB) crack1.bim crack1.hrb 0
+
+crack2.hrb : crack2.nas Makefile
+	$(NASK) crack2.nas crack2.hrb crack2.lst
 
 
 # 일반 규칙
@@ -112,19 +121,10 @@ clean:
 	-$(DEL) *.bin
 	-$(DEL) *.lst
 	-$(DEL) *.obj
-	-$(DEL) bootpack.map
-	-$(DEL) bootpack.bim
-	-$(DEL) bootpack.hrb
+	-$(DEL) *.map
+	-$(DEL) *.bim
+	-$(DEL) *.hrb
 	-$(DEL) haribote.sys
-	-$(DEL) a.map
-	-$(DEL) a.bim
-	-$(DEL) a.hrb
-	-$(DEL) hello3.map
-	-$(DEL) hello3.bim
-	-$(DEL) hello3.hrb
-	-$(DEL) crack1.map
-	-$(DEL) crack1.bim
-	-$(DEL) crack1.hrb
 
 src_only:
 	$(MAKE) clean
