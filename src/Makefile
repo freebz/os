@@ -50,7 +50,8 @@ bootpack.hrb : bootpack.bim Makefile
 haribote.sys : asmhead.bin bootpack.hrb Makefile
 	copy /B asmhead.bin+bootpack.hrb haribote.sys
 
-haribote.img : ipl.bin haribote.sys a.hrb hello.hrb hello2.hrb hello3.hrb hello4.hrb \
+haribote.img : ipl.bin haribote.sys a.hrb \
+		hello.hrb hello2.hrb hello3.hrb hello4.hrb hello5.hrb \
 		crack1.hrb crack2.hrb crack3.hrb crack4.hrb crack5.hrb crack6.hrb \
 		bug1.hrb bug2.hrb bug3.hrb Makefile
 	$(EDIMG) imgin:../z_tools/fdimg0at.tek \
@@ -63,6 +64,7 @@ haribote.img : ipl.bin haribote.sys a.hrb hello.hrb hello2.hrb hello3.hrb hello4
 		copy from:hello2.hrb to:@: \
 		copy from:hello3.hrb to:@: \
 		copy from:hello4.hrb to:@: \
+		copy from:hello5.hrb to:@: \
 		copy from:crack1.hrb to:@: \
 		copy from:crack2.hrb to:@: \
 		copy from:crack3.hrb to:@: \
@@ -97,6 +99,12 @@ hello4.bim : hello4.obj a_nask.obj Makefile
 
 hello4.hrb : hello4.bim Makefile
 	$(BIM2HRB) hello4.bim hello4.hrb 0
+
+hello5.bim : hello5.obj Makefile
+	$(OBJ2BIM) @$(RULEFILE) out:hello5.bim map:hello5.map hello5.obj
+
+hello5.hrb : hello5.obj Makefile
+	$(BIM2HRB) hello5.bim hello5.hrb 0
 
 crack1.bim : crack1.obj a_nask.obj Makefile
 	$(OBJ2BIM) @$(RULEFILE) out:crack1.bim map:crack1.map crack1.obj a_nask.obj
