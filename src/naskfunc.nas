@@ -19,6 +19,7 @@
 		GLOBAL	_memtest_sub
 		GLOBAL	_farjmp, _farcall
 		GLOBAL	_asm_hrb_api, _start_app
+		GLOBAL	_asm_end_app
 		EXTERN	_inthandler20, _inthandler21
 		EXTERN	_inthandler2c, _inthandler0d
 		EXTERN	_inthandler0c
@@ -174,7 +175,7 @@ _asm_inthandler0d:
 		MOV		ES, AX
 		CALL		_inthandler0d
 		CMP		EAX, 0
-		JNE		end_app
+		JNE		_asm_end_app
 		POP		EAX
 		POPAD
 		POP		DS
@@ -194,7 +195,7 @@ _asm_inthandler0c:
 	MOV	ES, AX
 	CALL	_inthandler0c
 	CMP	EAX, 0
-	JNE	end_app
+	JNE	_asm_end_app
 	POP	EAX
 	POPAD
 	POP	DS
@@ -254,15 +255,17 @@ _asm_hrb_api:
 		MOV		ES, AX
 		CALL		_hrb_api
 		CMP		EAX, 0			; EAX가 0이 아니면 애플리케이션 종료 처리
-		JNE		end_app
+		JNE		_asm_end_app
 		ADD		ESP, 32
 		POPAD
 		POP		ES
 		POP		DS
 		IRETD
-end_app:
+
+_asm_end_app:
 ; EAX는 tss.esp0의 번지
   		MOV		ESP, [EAX]
+		MOV		DWORD [EAX+4], 0
 		POPAD
 		RET					; cmd_app로 돌아간다.
 

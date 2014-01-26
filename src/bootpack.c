@@ -23,6 +23,7 @@ void HariMain(void)
   struct SHEET *sht_back, *sht_mouse, *sht_win, *sht_cons;
   struct TASK *task_a, *task_cons;
   struct TIMER *timer;
+  struct CONSOLE *cons;
 
   static char keytable0[0x80] = {
     0,   0,   '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 0,   0,
@@ -239,6 +240,14 @@ void HariMain(void)
 	  if (key_to != 0) { /* 콘솔에 */
 	    fifo32_put(&task_cons->fifo, 10 + 256);
 	  }
+	}
+	if (i == 256 + 0x3b && key_shift != 0 && task_cons->tss.ss0 != 0) { /* Shift+F1 */
+	  cons = (struct CONSOLE *) *((int *) 0x0fec);
+	  cons_putstr0(cons, "\nBreak(key) :\n");
+	  io_cli();	/* 레지스터 변경 중에 태스크가 바뀌면 곤란하기 때문에 */
+	  task_cons->tss.eax = (int) & (task_cons->tss.esp0);
+	  task_cons->tss.eip = (int) asm_end_app;
+	  io_sti();
 	}
 	/* 커서의 재표시 */
 	if (cursor_c >= 0) {

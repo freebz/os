@@ -38,6 +38,7 @@ void asm_inthandler20(void);
 void farjmp(int eip, int cs);
 void farcall(int eip, int cs);
 void asm_hrb_api(void);
+void asm_end_app(void);
 
 /* graphic.c */
 void init_palette(void);
