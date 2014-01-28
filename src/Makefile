@@ -53,7 +53,8 @@ haribote.sys : asmhead.bin bootpack.hrb Makefile
 haribote.img : ipl.bin haribote.sys a.hrb \
 		hello.hrb hello2.hrb hello3.hrb hello4.hrb hello5.hrb \
 		crack1.hrb crack2.hrb crack3.hrb crack4.hrb crack5.hrb crack6.hrb \
-		bug1.hrb bug2.hrb bug3.hrb Makefile
+		bug1.hrb bug2.hrb bug3.hrb \
+		winhelo.hrb Makefile
 	$(EDIMG) imgin:../z_tools/fdimg0at.tek \
 		wbinimg src:ipl.bin len:512 from:0 to:0 \
 		copy from:haribote.sys to:@: \
@@ -74,6 +75,7 @@ haribote.img : ipl.bin haribote.sys a.hrb \
 		copy from:bug1.hrb to:@: \
 		copy from:bug2.hrb to:@: \
 		copy from:bug3.hrb to:@: \
+		copy from:winhelo.hrb to:@: \
 		imgout:haribote.img
 
 a.bim : a.obj a_nask.obj Makefile
@@ -103,7 +105,7 @@ hello4.hrb : hello4.bim Makefile
 hello5.bim : hello5.obj Makefile
 	$(OBJ2BIM) @$(RULEFILE) out:hello5.bim map:hello5.map hello5.obj
 
-hello5.hrb : hello5.obj Makefile
+hello5.hrb : hello5.bim Makefile
 	$(BIM2HRB) hello5.bim hello5.hrb 0
 
 crack1.bim : crack1.obj a_nask.obj Makefile
@@ -144,6 +146,12 @@ bug3.bim : bug3.obj a_nask.obj Makefile
 
 bug3.hrb : bug3.bim Makefile
 	$(BIM2HRB) bug3.bim bug3.hrb 0
+
+winhelo.bim : winhelo.obj a_nask.obj Makefile
+	$(OBJ2BIM) @$(RULEFILE) out:winhelo.bim map:winhelo.map winhelo.obj a_nask.obj
+
+winhelo.hrb : winhelo.bim Makefile
+	$(BIM2HRB) winhelo.bim winhelo.hrb 0
 
 # 일반 규칙
 
