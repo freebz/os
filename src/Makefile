@@ -54,7 +54,7 @@ haribote.img : ipl.bin haribote.sys a.hrb \
 		hello.hrb hello2.hrb hello3.hrb hello4.hrb hello5.hrb \
 		crack1.hrb crack2.hrb crack3.hrb crack4.hrb crack5.hrb crack6.hrb \
 		bug1.hrb bug2.hrb bug3.hrb \
-		winhelo.hrb Makefile
+		winhelo.hrb winhelo2.hrb Makefile
 	$(EDIMG) imgin:../z_tools/fdimg0at.tek \
 		wbinimg src:ipl.bin len:512 from:0 to:0 \
 		copy from:haribote.sys to:@: \
@@ -76,6 +76,7 @@ haribote.img : ipl.bin haribote.sys a.hrb \
 		copy from:bug2.hrb to:@: \
 		copy from:bug3.hrb to:@: \
 		copy from:winhelo.hrb to:@: \
+		copy from:winhelo2.hrb to:@: \
 		imgout:haribote.img
 
 a.bim : a.obj a_nask.obj Makefile
@@ -152,6 +153,12 @@ winhelo.bim : winhelo.obj a_nask.obj Makefile
 
 winhelo.hrb : winhelo.bim Makefile
 	$(BIM2HRB) winhelo.bim winhelo.hrb 0
+
+winhelo2.bim : winhelo2.obj a_nask.obj Makefile
+	$(OBJ2BIM) @$(RULEFILE) out:winhelo2.bim map:winhelo2.map winhelo2.obj a_nask.obj
+
+winhelo2.hrb : winhelo2.bim Makefile
+	$(BIM2HRB) winhelo2.bim winhelo2.hrb 0
 
 # 일반 규칙
 
